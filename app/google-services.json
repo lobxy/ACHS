@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "667443834732",
+    "firebase_url": "https://achs-efd78.firebaseio.com",
+    "project_id": "achs-efd78",
+    "storage_bucket": "achs-efd78.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:667443834732:android:9851f5fd81935850",
+        "android_client_info": {
+          "package_name": "com.lobxy.achs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "667443834732-1fqkqv35qehkur77sslcaub6drcsmpjg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lobxy.achs",
+            "certificate_hash": "a280f520e107c79b086b3c875b868f2890520234"
+          }
+        },
+        {
+          "client_id": "667443834732-3kcjcrodvakbuikc74vigk4g0polsmq2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh283xm7zMUeOWxZFk0cufLFMSCGC4B_0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "667443834732-3kcjcrodvakbuikc74vigk4g0polsmq2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

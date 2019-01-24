@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="sites_name">
+        <item>Site A</item>
+        <item>Site B</item>
+        <item>Site C</item>
+        <item>Site D</item>
+    </string-array>
+    <string-array name="types">
+        <item>Unresolved</item>
+        <item>Resolved</item>
+    </string-array>
+</resources>
