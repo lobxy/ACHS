@@ -23,12 +23,16 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.lobxy.achs.Model.Supervisor;
 import com.lobxy.achs.R;
+import com.lobxy.achs.Utils.ShowAlertDialog;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SupervisorDetail extends AppCompatActivity {
 
@@ -44,6 +48,8 @@ public class SupervisorDetail extends AppCompatActivity {
     DatabaseReference fromPath, toPath, supervisorRef, userRef;
 
     ProgressDialog dialog;
+
+    ShowAlertDialog showAlertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +75,8 @@ public class SupervisorDetail extends AppCompatActivity {
         toPath = database.getReference("Complaints_Resolved");
         supervisorRef = database.getReference("Supervisors_Complaint_Slot");
         userRef = database.getReference("User_complaints");
+
+        showAlertDialog = new ShowAlertDialog(this);
 
         dialog = new ProgressDialog(this);
         dialog.setMessage("Resolving Complaint...");
@@ -115,7 +123,7 @@ public class SupervisorDetail extends AppCompatActivity {
                         finish();
 
                     } else {
-                        Toast.makeText(SupervisorDetail.this, "Please make sure you are connected to internet!", Toast.LENGTH_LONG).show();
+                        showAlertDialog.showAlertDialog("Alert", "Please make sure you are connected to internet!");
                     }
                 } else {
                     Toast.makeText(SupervisorDetail.this, "Happy Code is not correct.", Toast.LENGTH_LONG).show();
@@ -146,6 +154,53 @@ public class SupervisorDetail extends AppCompatActivity {
 
                             //remove the complain from the supervisor_complaint_node
                             supervisorRef.child(vSupervisorID).child(complaintId).removeValue();
+
+                            //update count value.
+                            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(complaintSite).child(vSupervisorID);
+                            ref.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    final Map<String, String> map = new HashMap<>();
+                                    long count;
+                                    if (dataSnapshot.exists()) {
+                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                            Supervisor visor = snapshot.getValue(Supervisor.class);
+                                            count = visor.getCount();
+                                            count--;
+
+                                            //String name, String email, String contact, String site, String uid, String password, long count
+                                            Supervisor supervisor = new Supervisor(visor.getName(), visor.getEmail(), visor.getContact(),
+                                                    visor.getUid(), visor.getSite(), visor.getPassword(), count);
+
+                                            supervisorRef.child(vSupervisorID).setValue(supervisor).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()) {
+                                                        Toast.makeText(SupervisorDetail.this, "Complain handeled", Toast.LENGTH_SHORT).show();
+                                                    } else {
+                                                        Log.i(TAG, "onComplete: error: " + task.getException().getLocalizedMessage());
+                                                    }
+                                                }
+                                            });
+
+                                        }
+
+
+                                    } else {
+                                        Log.i(TAG, "onDataChange: supervisor data doesn't exists");
+                                    }
+
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+
+
+
 
                             Toast.makeText(SupervisorDetail.this, "Complaint Transferred", Toast.LENGTH_SHORT).show();
                         } else {
@@ -183,6 +238,7 @@ public class SupervisorDetail extends AppCompatActivity {
             userID = bundle.getString("Complaint_USERID");
             complaintId = bundle.getString("Complaint_ID");
             complaint_happyCode = bundle.getString("Complaint_HAPPYCODE");
+
             vName.setText(user_name);
             vComplaintType.setText(type);
             vAddress.setText(address + "\n" + site);

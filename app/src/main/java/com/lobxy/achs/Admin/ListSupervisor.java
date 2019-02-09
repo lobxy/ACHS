@@ -1,8 +1,11 @@
 package com.lobxy.achs.Admin;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -30,6 +33,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Adapters.SelectionAdapter;
 import com.lobxy.achs.Model.Supervisor;
 import com.lobxy.achs.R;
+import com.lobxy.achs.Utils.ShowAlertDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +51,14 @@ public class ListSupervisor extends AppCompatActivity {
     List<Supervisor> list;
     String site;
 
+    ShowAlertDialog showAlertDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_supervisors_list);
+
+        showAlertDialog = new ShowAlertDialog(this);
 
         dialog = new ProgressDialog(this);
         dialog.setMessage("Working...");
@@ -137,35 +145,42 @@ public class ListSupervisor extends AppCompatActivity {
     }
 
     private void setData() {
-        dialog.show();
 
-        Query query = ref.orderByChild("count").limitToFirst(1);
+        if (connectivity()) {
+            dialog.show();
 
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                dialog.dismiss();
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Supervisor visor = snapshot.getValue(Supervisor.class);
-                        Log.i(TAG, "onDataChange: supervisor id: " + visor.getUid());
+            Query query = ref.orderByChild("count").limitToFirst(1);
 
-                        list.add(visor);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    dialog.dismiss();
+                    if (dataSnapshot.exists()) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            Supervisor visor = snapshot.getValue(Supervisor.class);
+                            Log.i(TAG, "onDataChange: supervisor id: " + visor.getUid());
+
+                            list.add(visor);
+                        }
+                        SelectionAdapter adapter = new SelectionAdapter(list, ListSupervisor.this);
+                        listView.setAdapter(adapter);
+                    } else {
+                        noVisorsTextView.setVisibility(View.VISIBLE);
+                        removeVisorText.setVisibility(View.GONE);
                     }
-                    SelectionAdapter adapter = new SelectionAdapter(list, ListSupervisor.this);
-                    listView.setAdapter(adapter);
-                } else {
-                    noVisorsTextView.setVisibility(View.VISIBLE);
-                    removeVisorText.setVisibility(View.GONE);
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                dialog.dismiss();
-                Toast.makeText(ListSupervisor.this, "Listing Supervisor Error: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    dialog.dismiss();
+                    Toast.makeText(ListSupervisor.this, "Listing Supervisor Error: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            showAlertDialog.showAlertDialog("Alert", "Not connected to the internet");
+        }
+
+
     }
 
     private void removeSupervisor(final String uid, final String email, final String password) {
@@ -238,5 +253,13 @@ public class ListSupervisor extends AppCompatActivity {
                     }
                 }
         );
+    }
+
+
+    public boolean connectivity() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        return networkInfo != null && networkInfo.isConnected();
     }
 }

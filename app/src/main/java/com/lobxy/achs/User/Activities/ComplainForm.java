@@ -276,7 +276,7 @@ public class ComplainForm extends AppCompatActivity {
         dialog.show();
         //Supervisors ref
         final DatabaseReference supervisorRef = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(site);
-        final DatabaseReference supervisorComplainRef = FirebaseDatabase.getInstance().getReference("Supervisors_Complaint_Slot").child(site);
+        final DatabaseReference supervisorComplainRef = FirebaseDatabase.getInstance().getReference("Supervisors_Complaint_Slot");
 
         //get the supervisor with lowest complain count right now.
         Query query = supervisorRef.orderByChild("count").limitToFirst(1);
@@ -288,7 +288,6 @@ public class ComplainForm extends AppCompatActivity {
                 String sid = "visor";
                 long count = 0;
                 if (dataSnapshot.exists()) {
-                    Log.i(TAG, "onDataChange: datasnapshot: " + dataSnapshot);
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         Supervisor visor = snapshot.getValue(Supervisor.class);
                         sid = visor.getUid();
@@ -319,11 +318,13 @@ public class ComplainForm extends AppCompatActivity {
                                     public void onComplete(@NonNull Task<Void> task) {
                                         if (task.isSuccessful()) {
                                             Log.i(TAG, "onComplete: Count updated");
-
                                             Log.i(TAG, "onComplete: Supervisor Assigned");
+
                                             Toast.makeText(ComplainForm.this, "Supervisor Assigned", Toast.LENGTH_SHORT).show();
                                             Toast.makeText(ComplainForm.this, "Complain Submitted", Toast.LENGTH_SHORT).show();
+
                                             //Show HAPPY CODE to the user!
+
                                             AlertDialog.Builder builder = new AlertDialog.Builder(ComplainForm.this);
                                             builder.setTitle(happyCode);
                                             builder.setMessage("Please take a note of this HAPPY CODE or you can find it in MY COMPLAINTS.")
@@ -331,15 +332,18 @@ public class ComplainForm extends AppCompatActivity {
                                                     .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                                                         @Override
                                                         public void onClick(DialogInterface dialogInterface, int i) {
+
                                                             dialogInterface.dismiss();
                                                             startActivity(new Intent(ComplainForm.this, UserMainScreen.class));
                                                             finish();
+
                                                         }
                                                     });
                                             AlertDialog alertDialog = builder.create();
                                             alertDialog.show();
 
                                         } else {
+
                                             Log.i(TAG, "onComplete: count update failed: " + task.getException().getLocalizedMessage());
                                             showAlert("Error", task.getException().getMessage());
 
@@ -349,6 +353,7 @@ public class ComplainForm extends AppCompatActivity {
 
 
                             } else {
+
                                 Log.i(TAG, "onComplete: Supervisor not assigned: Error: " + task.getException().getLocalizedMessage());
                                 showAlert("Error", task.getException().getMessage());
 
