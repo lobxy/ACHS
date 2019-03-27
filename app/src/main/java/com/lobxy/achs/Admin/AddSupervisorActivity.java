@@ -29,7 +29,7 @@ import com.lobxy.achs.R;
 
 import java.util.HashMap;
 
-public class AddSupervisor extends AppCompatActivity {
+public class AddSupervisorActivity extends AppCompatActivity {
 
     private static final String TAG = "Supervisor Add Activity";
     EditText edit_name, edit_email, edit_contact, edit_pwd, edit_cPwd;
@@ -143,7 +143,6 @@ public class AddSupervisor extends AppCompatActivity {
     private void createUser() {
         dialog.show();
 
-
         FirebaseOptions firebaseOptions = new FirebaseOptions.Builder()
                 .setDatabaseUrl("https://achs-efd78.firebaseio.com/")
                 .setApiKey("AIzaSyApIjfZw1vGCbPU0Y8Nc1GLwc88-8TEizw")
@@ -169,7 +168,7 @@ public class AddSupervisor extends AppCompatActivity {
                     mAuth2.signOut();
                 } else {
                     dialog.dismiss();
-                    Toast.makeText(AddSupervisor.this, "Supervisor registration error :" + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(AddSupervisorActivity.this, "Supervisor registration error :" + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     Log.d(TAG, "onComplete: : Supervisor registration error: " + task.getException().getMessage());
                 }
             }
@@ -193,12 +192,11 @@ public class AddSupervisor extends AppCompatActivity {
                         public void onComplete(@NonNull Task<Void> task) {
                             dialog.dismiss();
                             if (task.isSuccessful()) {
-                                Toast.makeText(AddSupervisor.this, "Supervisor Created", Toast.LENGTH_LONG).show();
-                                startActivity(new Intent(AddSupervisor.this, ListSupervisor.class));
+                                Toast.makeText(AddSupervisorActivity.this, "Supervisor Created", Toast.LENGTH_LONG).show();
                                 finish();
 
                             } else {
-                                Toast.makeText(AddSupervisor.this, "Type Set error: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                Toast.makeText(AddSupervisorActivity.this, "Type Set error: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
                                 Log.i(TAG, "onComplete: Type Set error: " + task.getException().getLocalizedMessage());
                             }
                         }
@@ -207,7 +205,7 @@ public class AddSupervisor extends AppCompatActivity {
                 } else {
                     dialog.dismiss();
                     Log.d(TAG, "onComplete: submitData Error: " + task.getException().getMessage());
-                    Toast.makeText(AddSupervisor.this, task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(AddSupervisorActivity.this, task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
 
                     //Remove the user and inform the user to register again!
                     final FirebaseUser user = auth.getCurrentUser();
@@ -222,7 +220,7 @@ public class AddSupervisor extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
                                                 //User removed!
-                                                AlertDialog.Builder builder = new AlertDialog.Builder(AddSupervisor.this);
+                                                AlertDialog.Builder builder = new AlertDialog.Builder(AddSupervisorActivity.this);
                                                 builder.setTitle("Alert");
                                                 builder.setMessage("Supervisor Creation Failed. Click OK and register again.")
                                                         .setCancelable(false)
@@ -237,7 +235,7 @@ public class AddSupervisor extends AppCompatActivity {
                                             } else {
                                                 //Handle the exception
                                                 Log.d(TAG, "onComplete: user removal error: " + task.getException());
-                                                Toast.makeText(AddSupervisor.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
+                                                Toast.makeText(AddSupervisorActivity.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     });

@@ -38,7 +38,7 @@ import com.lobxy.achs.Utils.ShowAlertDialog;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListSupervisor extends AppCompatActivity {
+public class ListSupervisorActivity extends AppCompatActivity {
 
     private static final String TAG = "SupervisorList";
     ListView listView;
@@ -81,7 +81,7 @@ public class ListSupervisor extends AppCompatActivity {
             public void onClick(View v) {
                 //Show the activity to add a new supervisor.
 
-                Intent intent = new Intent(ListSupervisor.this, AddSupervisor.class);
+                Intent intent = new Intent(ListSupervisorActivity.this, AddSupervisorActivity.class);
                 intent.putExtra("SiteChosen", site);
                 startActivity(intent);
             }
@@ -91,7 +91,7 @@ public class ListSupervisor extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                 //Show Alert Dialog to delete the supervisor.
-                AlertDialog.Builder builder = new AlertDialog.Builder(ListSupervisor.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(ListSupervisorActivity.this);
                 builder.setTitle("ALERT!!");
                 builder.setMessage("All unresolved complaints assigned will get deleted. Press Confirm to to delete the supervisor.")
                         .setCancelable(false)
@@ -162,7 +162,7 @@ public class ListSupervisor extends AppCompatActivity {
 
                             list.add(visor);
                         }
-                        SelectionAdapter adapter = new SelectionAdapter(list, ListSupervisor.this);
+                        SelectionAdapter adapter = new SelectionAdapter(list, ListSupervisorActivity.this);
                         listView.setAdapter(adapter);
                     } else {
                         noVisorsTextView.setVisibility(View.VISIBLE);
@@ -173,7 +173,7 @@ public class ListSupervisor extends AppCompatActivity {
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     dialog.dismiss();
-                    Toast.makeText(ListSupervisor.this, "Listing Supervisor Error: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(ListSupervisorActivity.this, "Listing Supervisor Error: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
         } else {
@@ -214,7 +214,7 @@ public class ListSupervisor extends AppCompatActivity {
                                                                         public void onComplete(@NonNull Task<Void> task) {
                                                                             if (task.isSuccessful()) {
                                                                                 //User removed!
-                                                                                AlertDialog.Builder builder = new AlertDialog.Builder(ListSupervisor.this);
+                                                                                AlertDialog.Builder builder = new AlertDialog.Builder(ListSupervisorActivity.this);
                                                                                 builder.setTitle("Alert");
                                                                                 builder.setMessage("Supervisor Deletion Successful.")
                                                                                         .setCancelable(false)
@@ -229,7 +229,7 @@ public class ListSupervisor extends AppCompatActivity {
                                                                             } else {
                                                                                 //Handle the exception
                                                                                 Log.d(TAG, "onComplete: user removal error: " + task.getException());
-                                                                                Toast.makeText(ListSupervisor.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
+                                                                                Toast.makeText(ListSupervisorActivity.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
                                                                             }
                                                                         }
                                                                     });
@@ -248,7 +248,7 @@ public class ListSupervisor extends AppCompatActivity {
 
                         } else {
                             Log.i(TAG, "onComplete: Deletion Failed error: " + task.getException().getMessage());
-                            Toast.makeText(ListSupervisor.this, "Deletion Failed: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(ListSupervisorActivity.this, "Deletion Failed: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
                         }
                     }
                 }

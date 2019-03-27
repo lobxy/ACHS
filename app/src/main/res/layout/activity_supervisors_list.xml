@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Admin.ListSupervisor">
+    tools:context=".Admin.ListSupervisorActivity">
 
     <TextView
         android:id="@+id/visor_main_textView"

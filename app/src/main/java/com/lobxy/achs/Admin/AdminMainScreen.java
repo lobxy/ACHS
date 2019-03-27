@@ -71,7 +71,7 @@ public class AdminMainScreen extends AppCompatActivity {
                 Log.i(TAG, "onClick: Type" + type);
                 Log.i(TAG, "onClick: Site" + site);
                 dialog.cancel();
-                startActivity(new Intent(AdminMainScreen.this, ComplaintActivity.class));
+                startActivity(new Intent(AdminMainScreen.this, FragmentsActivity.class));
             }
         });
         builder.create();
@@ -90,7 +90,7 @@ public class AdminMainScreen extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.addSupervisor) {
             //pass an intent to complaint Activity
-            startActivity(new Intent(this, ListSupervisor.class));
+            startActivity(new Intent(this, ListSupervisorActivity.class));
         }
         if (item.getItemId() == R.id.logout) {
             FirebaseAuth auth = FirebaseAuth.getInstance();

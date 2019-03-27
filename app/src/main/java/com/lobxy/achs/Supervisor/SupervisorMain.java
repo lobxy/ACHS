@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,6 +28,7 @@ import com.lobxy.achs.Adapters.ComplaintAdapter;
 import com.lobxy.achs.Login;
 import com.lobxy.achs.Model.Complain;
 import com.lobxy.achs.R;
+import com.lobxy.achs.Utils.ShowAlertDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +46,14 @@ public class SupervisorMain extends AppCompatActivity {
     ProgressDialog dialog;
     String uId;
 
+    ShowAlertDialog alertDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_supervisor_main);
+
+        alertDialog = new ShowAlertDialog(this);
 
         dialog = new ProgressDialog(this);
         dialog.setMessage("Working");
@@ -69,8 +73,10 @@ public class SupervisorMain extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Complain complaints = vComplaintList.get(i);
+
                 Intent intent = new Intent(SupervisorMain.this, SupervisorDetail.class);
                 Bundle bundle = new Bundle();
+
                 bundle.putString("Complaint_CONTACT", complaints.getContact());
                 bundle.putString("Complaint_EMAIL", complaints.getEmail());
                 bundle.putString("Complaint_TYPE", complaints.getType());
@@ -96,7 +102,7 @@ public class SupervisorMain extends AppCompatActivity {
         if (connectivity()) {
             setData();
         } else {
-            Toast.makeText(this, "Please make sure you are connected to internet!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please connect to internet", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -107,8 +113,6 @@ public class SupervisorMain extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 dialog.dismiss();
                 vComplaintList.clear();
-
-                Log.i(TAG, "onDataChange: COUNT: " + dataSnapshot.getChildrenCount());
 
                 for (DataSnapshot reqSnap : dataSnapshot.getChildren()) {
                     Complain complaints = reqSnap.getValue(Complain.class);
@@ -125,11 +129,10 @@ public class SupervisorMain extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 dialog.dismiss();
-                Toast.makeText(SupervisorMain.this, "Error:" + databaseError.getMessage(), Toast.LENGTH_LONG).show();
+                alertDialog.showAlertDialog("Error", databaseError.getMessage());
             }
         });
     }
-
 
     public boolean connectivity() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

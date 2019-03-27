@@ -39,6 +39,7 @@ public class UserComplainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_complains);
+
         dialog = new ProgressDialog(this);
         dialog.setInverseBackgroundForced(false);
         dialog.setCancelable(false);

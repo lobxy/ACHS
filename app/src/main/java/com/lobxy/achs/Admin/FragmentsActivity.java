@@ -8,7 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import com.lobxy.achs.Adapters.SectionPagerAdapter;
 import com.lobxy.achs.R;
 
-public class ComplaintActivity extends AppCompatActivity {
+public class FragmentsActivity extends AppCompatActivity {
 
     SectionPagerAdapter pagerAdapter = new SectionPagerAdapter(getSupportFragmentManager());
     TabLayout tabLayout;

@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:text="Add"
+            android:text="Address"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             app:layout_constraintBaseline_toBaselineOf="@+id/profile_edit_address"
@@ -98,6 +98,7 @@
             android:id="@+id/profile_edit_contact"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/edit_background"
@@ -111,20 +112,20 @@
             android:textColor="@android:color/black"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/profile_edit_address"
+            app:layout_constraintStart_toEndOf="@+id/contact"
             app:layout_constraintTop_toBottomOf="@+id/profile_edit_address" />
 
         <TextView
             android:id="@+id/site"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:text="Site"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="@+id/profile_spinner_site"
-            app:layout_constraintEnd_toStartOf="@+id/profile_spinner_site"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintEnd_toEndOf="@+id/contact"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/profile_spinner_site" />
 
@@ -138,6 +139,7 @@
             android:clickable="false"
             android:padding="10dp"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.198"
             app:layout_constraintStart_toStartOf="@+id/profile_edit_contact"
             app:layout_constraintTop_toBottomOf="@+id/profile_edit_contact" />
 

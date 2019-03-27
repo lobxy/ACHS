@@ -27,7 +27,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,28 +42,21 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class ComplainForm extends AppCompatActivity {
     private static final String TAG = "Complain Form Activity";
 
-    EditText edit_description;
+    private EditText edit_description;
 
-    TextView showTime;
+    private TextView showTime;
 
-    public String des, type, date, time, uid;
-    String name, address, site, contact, email, visitTime = "Select", complaintInitTime;
+    private String mName, mAddress, mSite, mContact, mEmail, mVisitTime, mComplaintInitTime, mDescription, mType, mDate, mTime, mUid;
 
-    DatabaseReference databaseReference;     //For Complaints
+    DatabaseReference complaintReference;     //For Complaints
     DatabaseReference userComplaintsDatabaseReference;     //For User's complaints section.
 
     ProgressDialog dialog;
-
-    FirebaseAuth mAuth;
-
-    FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,108 +68,128 @@ public class ComplainForm extends AppCompatActivity {
         dialog.setCancelable(false);
         dialog.setInverseBackgroundForced(false);
 
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
-        uid = user.getUid();
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        mUid = mAuth.getCurrentUser().getUid();
 
-        type = getIntent().getStringExtra("Type");
-        databaseReference = FirebaseDatabase.getInstance().getReference("Complaints_Unresolved");
-        userComplaintsDatabaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(uid);
+        mType = getIntent().getStringExtra("Type");
+        complaintReference = FirebaseDatabase.getInstance().getReference("Complaints_Unresolved");
+        userComplaintsDatabaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(mUid);
 
         edit_description = findViewById(R.id.form_edit_desciption);
         showTime = findViewById(R.id.form_text_show_time);
 
         Button btn_submit = findViewById(R.id.form_button_submit);
 
-        //Get current time and date.
-        String currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
-        String currentTime = DateFormat.getTimeInstance().format(Calendar.getInstance().getTime());
-        complaintInitTime = currentDate + " @ " + currentTime;
-
         showTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mDate = "";
+                mTime = "";
+
+                showTime.setText("Pick");
+
                 //hide the keyboard
                 InputMethodManager inputManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 if (getCurrentFocus() != null) {
                     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                 }
 
-                // Get Current Date
-                visitTime = null;
-                showTime.setText("Select");
-                getDate();
+                newDatePicker();
             }
         });
 
         btn_submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Process request
-                Validation();
-
+                //Process complaint
+                validation();
             }
         });
 
     }
 
-    private void getDate() {
+    private void newDatePicker() {
         final Calendar c = Calendar.getInstance();
         int mYear = c.get(Calendar.YEAR);
         int mMonth = c.get(Calendar.MONTH);
         int mDay = c.get(Calendar.DAY_OF_MONTH);
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year,
-                                          int monthOfYear, int dayOfMonth) {
-                        date = (dayOfMonth + "-" + (monthOfYear + 1) + "-" + year);
-                        visitTime = date;
-                        Log.i(TAG, "onTimeSet: date:" + date);
-                        getTime();
-                    }
-                }, mYear, mMonth, mDay);
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-        datePickerDialog.show();
+
+        DatePickerDialog.OnDateSetListener dateSetListener = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                //get date stuff done here.
+                mDate = (day + "-" + (month + 1) + "-" + year);
+                Log.i(TAG, "onTimeSet: mDate:" + mDate);
+
+                newTimePicker();
+            }
+        };
+
+        DatePickerDialog dateDialog = new DatePickerDialog(this, dateSetListener, mYear, mMonth, mDay);
+        dateDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                showTime.setText("Pick");
+            }
+        });
+        dateDialog.getDatePicker().setMinDate(System.currentTimeMillis() + 43200 * 1000);
+
+        dateDialog.show();
     }
 
-    private void getTime() {
-        // Get Current Time
+    private void newTimePicker() {
         final Calendar c = Calendar.getInstance();
         int mHour = c.get(Calendar.HOUR_OF_DAY);
         int mMinute = c.get(Calendar.MINUTE);
 
-        // Launch Time Picker Dialog
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay,
-                                          int minute) {
-                        time = (hourOfDay + ":" + minute);
-                        visitTime = visitTime + " @ " + time;
-                        showTime.setText(visitTime);
-                    }
-                }, mHour, mMinute, false);
-        timePickerDialog.show();
+        TimePickerDialog.OnTimeSetListener timeSetListener = new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
+                if (hourOfDay > 12) {
+                    hourOfDay -= 12;
+                    mTime = (hourOfDay + ":" + minute + ":" + "PM");
+                } else {
+                    mTime = (hourOfDay + ":" + minute + ":" + "AM");
+                }
+
+                Log.i(TAG, "onTimeSet: mDate:" + mTime);
+
+                mVisitTime = mDate + " @ " + mTime;
+
+                showTime.setText(mVisitTime);
+            }
+        };
+
+        TimePickerDialog dialog = new TimePickerDialog(this, timeSetListener, mHour, mMinute, false);
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                mDate = "";
+                showTime.setText("Pick");
+            }
+        });
+
+        dialog.show();
+
     }
 
-    public void Validation() {
-        des = edit_description.getText().toString().trim();
-        if (des.isEmpty()) {
-            edit_description.setError("Description Field is empty ");
+    public void validation() {
+        mDescription = edit_description.getText().toString().trim();
+
+        if (mDescription.isEmpty()) {
+            edit_description.setError("Description is empty ");
             edit_description.requestFocus();
             return;
         }
-        if (visitTime.equals("Select") || visitTime.isEmpty()) {
+        if (showTime.getText().toString().equals("Pick") || mDate.isEmpty() || mTime.isEmpty()) {
             Toast.makeText(this, "Please pick a visit time.", Toast.LENGTH_SHORT).show();
             return;
         }
+
         //Upload complaint form data to the database
-        if (connectivity()) {
-            uploadComplaintData(name, address, site, contact, email);
-        } else {
-            showAlert("Alert", "Please connect to the internet");
-        }
+        if (connectivity()) uploadComplaintData(mName, mAddress, mSite, mContact, mEmail);
+
+        else showAlert("Alert", "Please connect to the internet");
 
     }
 
@@ -185,21 +197,21 @@ public class ComplainForm extends AppCompatActivity {
         //User database reference
         dialog.show();
 
-        DatabaseReference userDataReference = FirebaseDatabase.getInstance().getReference().child("User_Data").child("User").child(uid);
+        DatabaseReference userDataReference = FirebaseDatabase.getInstance().getReference().child("User_Data").child("User").child(mUid);
         userDataReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 dialog.dismiss();
 
-                name = dataSnapshot.child("name").getValue(String.class);
-                address = dataSnapshot.child("address").getValue(String.class);
-                site = dataSnapshot.child("site").getValue(String.class);
-                contact = dataSnapshot.child("contact").getValue(String.class);
-                email = dataSnapshot.child("email").getValue(String.class);
+                mName = dataSnapshot.child("name").getValue(String.class);
+                mAddress = dataSnapshot.child("address").getValue(String.class);
+                mSite = dataSnapshot.child("site").getValue(String.class);
+                mContact = dataSnapshot.child("contact").getValue(String.class);
+                mEmail = dataSnapshot.child("email").getValue(String.class);
 
-                Log.i(TAG, "onDataChange: Site_" + site + "Type_: " + type);
+                Log.i(TAG, "onDataChange: Site_" + mSite + "Type_: " + mType);
                 //Update the reference!
-                databaseReference = databaseReference.child(site).child(type);
+                complaintReference = complaintReference.child(mSite).child(mType);
 
             }
 
@@ -213,58 +225,56 @@ public class ComplainForm extends AppCompatActivity {
     }
 
     public void uploadComplaintData(String name, String address, final String site, String contact, String email) {
+        //Get current mTime and mDate.
+        String currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+        String currentTime = DateFormat.getTimeInstance().format(Calendar.getInstance().getTime());
+        mComplaintInitTime = currentDate + " @ " + currentTime;
 
         dialog.show();
 
-        final String id = databaseReference.push().getKey();
+        final String id = complaintReference.push().getKey();
         final String happyCode = HappyCode();
 
         //create a new object of model class, feed the data to it.
-        final Complain complain = new Complain(uid, id, name, email, address, contact, site, type, des, visitTime, complaintInitTime,
+        final Complain complain = new Complain(mUid, id, name, email, address, contact, site, mType, mDescription, mVisitTime, mComplaintInitTime,
                 happyCode, "Unresolved", "Not Assigned",
                 "No Data");
 
         assert id != null;
         //Upload data to the firebase
-        databaseReference.child(id).setValue(complain).addOnSuccessListener(new OnSuccessListener<Void>() {
+        complaintReference.child(id).setValue(complain).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Log.i(TAG, "onSuccess: Form Data submission successful");
 
-                //feed data on user complains model class.
-                UserComplains userComplains = new UserComplains(type, id, happyCode, complaintInitTime,
+                //feed data on mUser complains model class.
+                UserComplains userComplains = new UserComplains(mType, id, happyCode, mComplaintInitTime,
                         "Unresolved", "No Data");
 
-                //Save data to user complaints database node, for user's MY COMPLAINTS section.
-                userComplaintsDatabaseReference.child(id).setValue(userComplains).addOnFailureListener(new OnFailureListener() {
+                //Save data to mUser complaints database node, for mUser's MY COMPLAINTS section.
+                userComplaintsDatabaseReference.child(id).setValue(userComplains).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                        Log.i(TAG, "onFailure: User's complain data saving error:" + e.getMessage());
-                        showAlert("Error", e.getMessage());
-
+                    public void onComplete(@NonNull Task<Void> task) {
                         dialog.dismiss();
+                        if (task.isSuccessful()) {
 
-                    }
-                }).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        dialog.dismiss();
+                            //assign supervisor;
+                            updateCount(site, complain, happyCode);
 
-                        //assign supervisor;
-                        assignSupervisor(site, complain, happyCode);
-
-                        Log.i(TAG, "onSuccess: User's complain data saving Success");
+                            Log.i(TAG, "onSuccess: User's complain data saving Success");
+                        } else {
+                            //remove mUser complains from the UNRESOLVED complain pool.
+                            // complaintReference.child(id).removeValue();
+                            showAlert("Error", task.getException().getMessage());
+                        }
                     }
                 });
-
-
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 dialog.dismiss();
-
+                //no rollback needed.
                 Log.i(TAG, "onFailure: Form data submission error " + e.getMessage());
                 showAlert("Error", e.getMessage());
             }
@@ -272,7 +282,7 @@ public class ComplainForm extends AppCompatActivity {
 
     }
 
-    private void assignSupervisor(final String site, final Complain complain, final String happyCode) {
+    private void updateCount(final String site, final Complain complain, final String happyCode) {
         dialog.show();
         //Supervisors ref
         final DatabaseReference supervisorRef = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(site);
@@ -283,84 +293,31 @@ public class ComplainForm extends AppCompatActivity {
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                final Map<String, String> map = new HashMap<>();
 
                 String sid = "visor";
                 long count = 0;
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         Supervisor visor = snapshot.getValue(Supervisor.class);
-                        sid = visor.getUid();
                         count = visor.getCount();
-                        count++;
-                        map.put("contact", visor.getContact());
-                        map.put("count", String.valueOf(count));
-                        map.put("email", visor.getEmail());
-                        map.put("name", visor.getName());
-                        map.put("password", visor.getPassword());
-                        map.put("site", visor.getSite());
-                        map.put("uid", visor.getUid());
+                        sid = visor.getUid();
                     }
-
-                    //add count++, after successful supervisor assignment;
-                    Log.i(TAG, "onDataChange: supervisor id: " + sid);
+                    count++;
 
                     final String finalSid = sid;
-                    supervisorComplainRef.child(sid).child(complain.getComplaintID()).setValue(complain).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    supervisorRef.child(sid).child("count").setValue(count).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            dialog.dismiss();
-
                             if (task.isSuccessful()) {
-                                //update count here.
-                                supervisorRef.child(finalSid).setValue(map).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (task.isSuccessful()) {
-                                            Log.i(TAG, "onComplete: Count updated");
-                                            Log.i(TAG, "onComplete: Supervisor Assigned");
+                                Log.i(TAG, "onComplete: count updated ");
 
-                                            Toast.makeText(ComplainForm.this, "Supervisor Assigned", Toast.LENGTH_SHORT).show();
-                                            Toast.makeText(ComplainForm.this, "Complain Submitted", Toast.LENGTH_SHORT).show();
-
-                                            //Show HAPPY CODE to the user!
-
-                                            AlertDialog.Builder builder = new AlertDialog.Builder(ComplainForm.this);
-                                            builder.setTitle(happyCode);
-                                            builder.setMessage("Please take a note of this HAPPY CODE or you can find it in MY COMPLAINTS.")
-                                                    .setCancelable(false)
-                                                    .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                                                        @Override
-                                                        public void onClick(DialogInterface dialogInterface, int i) {
-
-                                                            dialogInterface.dismiss();
-                                                            startActivity(new Intent(ComplainForm.this, UserMainScreen.class));
-                                                            finish();
-
-                                                        }
-                                                    });
-                                            AlertDialog alertDialog = builder.create();
-                                            alertDialog.show();
-
-                                        } else {
-
-                                            Log.i(TAG, "onComplete: count update failed: " + task.getException().getLocalizedMessage());
-                                            showAlert("Error", task.getException().getMessage());
-
-                                        }
-                                    }
-                                });
-
+                                assignComplainToSupervisor(supervisorComplainRef, finalSid, complain, happyCode);
 
                             } else {
-
-                                Log.i(TAG, "onComplete: Supervisor not assigned: Error: " + task.getException().getLocalizedMessage());
-                                showAlert("Error", task.getException().getMessage());
-
+                                Log.i(TAG, "onComplete: couldn't update count");
                             }
                         }
                     });
-
 
                 }
             }
@@ -374,6 +331,79 @@ public class ComplainForm extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void assignComplainToSupervisor(DatabaseReference supervisorComplainRef, final String finalSid, Complain complain, final String happyCode) {
+
+        supervisorComplainRef.child(finalSid).child(complain.getComplaintID()).setValue(complain)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        dialog.dismiss();
+
+                        if (task.isSuccessful()) {
+                            //Show HAPPY CODE to the mUser!
+
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ComplainForm.this);
+                            builder.setTitle(happyCode);
+                            builder.setMessage("Please take a note of this HAPPY CODE or you can find it in MY COMPLAINTS.")
+                                    .setCancelable(false)
+                                    .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                                            dialogInterface.dismiss();
+                                            startActivity(new Intent(ComplainForm.this, UserMainScreen.class));
+                                            finish();
+
+                                        }
+                                    });
+                            AlertDialog alertDialog = builder.create();
+                            alertDialog.show();
+
+                        } else {
+                            //complain not set to supervisor, reset the count variable.
+                            resetCount(finalSid);
+                            Log.i(TAG, "onComplete: Supervisor not assigned: Error: " + task.getException().getLocalizedMessage());
+                            showAlert("Error", task.getException().getMessage());
+                        }
+                    }
+                });
+    }
+
+    private void resetCount(String finalSid) {
+        final DatabaseReference resetReference = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(mSite).child(finalSid);
+        resetReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                long count = 0;
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        Supervisor visor = snapshot.getValue(Supervisor.class);
+                        count = visor.getCount();
+                    }
+                    count--;
+
+                    resetReference.child("count").setValue(count).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                Log.i(TAG, "resetCount: count updated ");
+                            } else {
+                                Log.i(TAG, "resetCount:count not update ");
+                            }
+                        }
+                    });
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                showAlert("Error", databaseError.getMessage());
+            }
+        });
+        showAlert("Error", "Couldn't process complain.\nTry again later");
     }
 
     @Override
@@ -410,8 +440,6 @@ public class ComplainForm extends AppCompatActivity {
         });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
-
     }
-
 
 }
