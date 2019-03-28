@@ -10,6 +10,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".User.Activities.FeedbackActivity"></activity>
         <activity
             android:name=".SplashScreen"
             android:theme="@style/AppFullScreenTheme">
@@ -19,7 +20,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".Login"
             android:theme="@style/AppFullScreenTheme"
@@ -28,7 +28,6 @@
             android:name=".Register"
             android:theme="@style/AppFullScreenTheme"
             android:windowSoftInputMode="stateHidden" />
-
         <activity android:name=".User.Activities.UserMainScreen" />
         <activity
             android:name=".User.Activities.ComplainForm"
@@ -43,18 +42,16 @@
         <activity
             android:name=".User.Activities.Complains"
             android:label="Types" />
-        <activity android:name=".Admin.AdminMainScreen"></activity>
+        <activity android:name=".Admin.AdminMainScreen" />
         <activity
             android:name=".Admin.FragmentsActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
         <activity android:name=".Admin.AddSupervisorActivity" />
         <activity android:name=".Admin.ListSupervisorActivity" />
-
-        <activity android:name=".Supervisor.SupervisorDetail" />
+        <activity
+            android:name=".Supervisor.SupervisorDetail"
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".Supervisor.SupervisorMain" />
-
-
     </application>
 
 </manifest>

@@ -29,13 +29,17 @@ public class UserComplainAdapter extends ArrayAdapter<UserComplains> {
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         LayoutInflater inflater = context.getLayoutInflater();
-        View listViewItem = inflater.inflate(R.layout.complaints_user_list_item, null, true);
-        //type, requestId, happyCode, complaintInitTime, completionStatus;
+        View listViewItem = convertView;
+
+        if (listViewItem == null) {
+            listViewItem = inflater.inflate(R.layout.complaints_user_list_item, null, true);
+        }
 
         TextView happyCode = listViewItem.findViewById(R.id.happycode);
         TextView complaintDate = listViewItem.findViewById(R.id.complaintDate);
         TextView complaintType = listViewItem.findViewById(R.id.complaintType);
         TextView completionStatus = listViewItem.findViewById(R.id.completionStatus);
+        TextView supervisorName = listViewItem.findViewById(R.id.supervisorName);
 
         UserComplains myComplaints = complaintList.get(position);
 
@@ -43,8 +47,10 @@ public class UserComplainAdapter extends ArrayAdapter<UserComplains> {
         complaintDate.setText("Complaint Time: " + myComplaints.getComplaintInitTime());
         complaintType.setText("Type: " + myComplaints.getType());
         completionStatus.setText("Status: " + myComplaints.getCompletionStatus());
+        supervisorName.setText("Supervisor Name: " + myComplaints.getSupervisorName());
 
         return listViewItem;
+
     }
 
 }

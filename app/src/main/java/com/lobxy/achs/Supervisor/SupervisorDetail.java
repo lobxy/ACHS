@@ -36,11 +36,11 @@ public class SupervisorDetail extends AppCompatActivity {
 
     private static final String TAG = "Supervisor Complaint";
 
-    TextView vName, vComplaintType, vAddress, vDes, vTimeOfComplaint, vVisitTime, vCommonArea, vContact, vEmail;
+    TextView vName, vComplaintType, vAddress, vDes, vTimeOfComplaint, vVisitTime,
+            vCommonArea, vContact, vEmail;
 
-    Button button_submit;
-
-    String complaintId, complaint_happyCode, vSupervisorID, complaintSite, complaintType, userID;
+    String complaintId, complaint_happyCode, vSupervisorID, complaintSite, complaintType,
+            userID;
 
     EditText inputHappyCode;
 
@@ -57,18 +57,45 @@ public class SupervisorDetail extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_supervisor_detail);
 
-        setViews();
+        vName = findViewById(R.id.visor_request_text_name);
+        vContact = findViewById(R.id.visor_request_text_phone);
+        vEmail = findViewById(R.id.visor_request_text_email);
+        vComplaintType = findViewById(R.id.visor_request_text_complaintType);
+        vAddress = findViewById(R.id.visor_request_text_address);
+        vTimeOfComplaint = findViewById(R.id.visor_request_text_complainttime);
+        vVisitTime = findViewById(R.id.visor_request_text_visitTime);
+        vCommonArea = findViewById(R.id.visor_request_text_commonArea);
+        vDes = findViewById(R.id.visor_request_text_description);
+
+        Button button_submit = findViewById(R.id.visor_button_submit);
+        inputHappyCode = findViewById(R.id.visor_edit_happy_code);
+
+        auth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
+
+        fromPath = database.getReference("Complaints_Unresolved");
+        toPath = database.getReference("Complaints_Resolved");
+        supervisorRef = database.getReference("Supervisors_Complaint_Slot");
+        userRef = database.getReference("User_complaints");
+
+        alertDialog = new ShowAlertDialog(this);
+
+        dialog = new ProgressDialog(this);
+        dialog.setMessage("Resolving Complaint...");
+        dialog.setCancelable(false);
+        dialog.setInverseBackgroundForced(false);
 
         button_submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                updateCount();
-
+                if (connectivity()) updateCount();
+                else {
+                    Toast.makeText(SupervisorDetail.this, "Not connected to internet", Toast.LENGTH_SHORT).show();
+                }
             }
         });
-    }
 
+    }
 
     public String getCurrentTime() {
         Calendar cal = Calendar.getInstance();
@@ -115,44 +142,25 @@ public class SupervisorDetail extends AppCompatActivity {
     private void updateCount() {
 
         //update count value.
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(complaintSite).child(vSupervisorID);
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(complaintSite);
 
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
-
+        ref.child(vSupervisorID).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 long count = 0;
                 if (dataSnapshot.exists()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Supervisor visor = snapshot.getValue(Supervisor.class);
-                        count = visor.getCount();
-                    }
-                    count--;
+                    Supervisor supervisor = dataSnapshot.getValue(Supervisor.class);
+                    count = supervisor.getCount();
 
-                    ref.child("count").setValue(count).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    ref.child("count").setValue(count--).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
                                 Log.i(TAG, "onComplete: updated count");
+
                             } else Log.i(TAG, "onComplete: couldn't update count");
                         }
                     });
-
-
-//                        //String name, String email, String contact, String site, String uid, String password, long count
-//                        Supervisor supervisor = new Supervisor(visor.getName(), visor.getEmail(), visor.getContact(),
-//                                visor.getUid(), visor.getSite(), visor.getPassword(), count);
-//
-//                        supervisorRef.child(vSupervisorID).setValue(supervisor).addOnCompleteListener(new OnCompleteListener<Void>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<Void> task) {
-//                                if (task.isSuccessful()) {
-//                                    Toast.makeText(SupervisorDetail.this, "Complain handled", Toast.LENGTH_SHORT).show();
-//                                } else {
-//                                    Log.i(TAG, "onComplete: error: " + task.getException().getLocalizedMessage());
-//                                }
-//                            }
-//                        });
                 } else {
                     Log.i(TAG, "onDataChange: supervisor data doesn't exists");
                 }
@@ -220,84 +228,4 @@ public class SupervisorDetail extends AppCompatActivity {
         return networkInfo != null && networkInfo.isConnected();
     }
 
-    private void setViews() {
-        vName = findViewById(R.id.visor_request_text_name);
-        vContact = findViewById(R.id.visor_request_text_phone);
-        vEmail = findViewById(R.id.visor_request_text_email);
-        vComplaintType = findViewById(R.id.visor_request_text_complaintType);
-        vAddress = findViewById(R.id.visor_request_text_address);
-        vTimeOfComplaint = findViewById(R.id.visor_request_text_complainttime);
-        vVisitTime = findViewById(R.id.visor_request_text_visitTime);
-        vCommonArea = findViewById(R.id.visor_request_text_commonArea);
-        vDes = findViewById(R.id.visor_request_text_description);
-
-        button_submit = findViewById(R.id.visor_button_submit);
-        inputHappyCode = findViewById(R.id.visor_edit_happy_code);
-
-        auth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
-
-        fromPath = database.getReference("Complaints_Unresolved");
-        toPath = database.getReference("Complaints_Resolved");
-        supervisorRef = database.getReference("Supervisors_Complaint_Slot");
-        userRef = database.getReference("User_complaints");
-
-        alertDialog = new ShowAlertDialog(this);
-
-        dialog = new ProgressDialog(this);
-        dialog.setMessage("Resolving Complaint...");
-        dialog.setCancelable(false);
-        dialog.setInverseBackgroundForced(false);
-    }
-
 }
-
-    /*
-        String visor_code = inputHappyCode.getText().toString().trim();
-                    Log.i(TAG, "onClick: visor_code" + visor_code);
-                            Log.i(TAG, "onClick: happyCode " + complaint_happyCode);
-
-                            if (visor_code.equals(complaint_happyCode)) {
-                            dialog.show();
-                            if (connectivity()) {
-
-                            fromPath = fromPath.child(complaintSite).child(complaintType).child(complaintId);
-                            toPath = toPath.child(complaintSite).child(complaintType).child(complaintId);
-                            userRef = userRef.child(userID).child(complaintId);
-
-                        Set the status in unresolved and user's complaints to RESOLVED.
-                        Set the complaintCompletionTime in both user's complaints and UNRESOLVED node of complaint.
-                        Move the complaint from UNRESOLVED to RESOLVED.
-                        Remove the complaint from UNRESOLVED.
-
-    //get Current time
-
-
-                        Log.i(TAG,"onClick: time"+time);
-
-                                userRef.child("completionStatus").setValue("Resolved");
-                                userRef.child("complaintCompletionTime").setValue(time);
-
-                                fromPath.child("completionStatus").setValue("Resolved");
-                                fromPath.child("complaintCompletionTime").setValue(time);
-
-                                //move to complain from unresolved node to resolved node
-                                moveRecord(fromPath,toPath);
-
-                                dialog.dismiss();
-                                Toast.makeText(SupervisorDetail.this,"Complaint Confirmed.",Toast.LENGTH_SHORT).show();
-
-                                startActivity(new Intent(SupervisorDetail.this,SupervisorMain.class));
-        finish();
-
-        }else{
-        alertDialog.showAlertDialog("Alert","Please make sure you are connected to internet!");
-        }
-        }else{
-        Toast.makeText(SupervisorDetail.this,"Happy Code is not correct.",Toast.LENGTH_LONG).show();
-        }
-
-//after 275
-            String time = getCurrentTime();
-
-        */

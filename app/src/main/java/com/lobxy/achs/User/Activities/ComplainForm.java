@@ -51,7 +51,9 @@ public class ComplainForm extends AppCompatActivity {
 
     private TextView showTime;
 
-    private String mName, mAddress, mSite, mContact, mEmail, mVisitTime, mComplaintInitTime, mDescription, mType, mDate, mTime, mUid;
+    private String mName, mAddress, mSite, mContact, mEmail, mVisitTime,
+            mComplaintInitTime, mDescription, mType, mDate, mTime, mUid, mSupervisorId,
+            mSuperivisorName;
 
     DatabaseReference complaintReference;     //For Complaints
     DatabaseReference userComplaintsDatabaseReference;     //For User's complaints section.
@@ -249,7 +251,7 @@ public class ComplainForm extends AppCompatActivity {
 
                 //feed data on mUser complains model class.
                 UserComplains userComplains = new UserComplains(mType, id, happyCode, mComplaintInitTime,
-                        "Unresolved", "No Data");
+                        "Unresolved", "No Data", mSupervisorId, mSuperivisorName);
 
                 //Save data to mUser complaints database node, for mUser's MY COMPLAINTS section.
                 userComplaintsDatabaseReference.child(id).setValue(userComplains).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -294,24 +296,24 @@ public class ComplainForm extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                String sid = "visor";
+                mSupervisorId = "visor";
                 long count = 0;
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         Supervisor visor = snapshot.getValue(Supervisor.class);
                         count = visor.getCount();
-                        sid = visor.getUid();
+                        mSupervisorId = visor.getUid();
+                        mSuperivisorName = visor.getName();
                     }
                     count++;
 
-                    final String finalSid = sid;
-                    supervisorRef.child(sid).child("count").setValue(count).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    supervisorRef.child(mSupervisorId).child("count").setValue(count).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
                                 Log.i(TAG, "onComplete: count updated ");
 
-                                assignComplainToSupervisor(supervisorComplainRef, finalSid, complain, happyCode);
+                                assignComplainToSupervisor(supervisorComplainRef, mSupervisorId, complain, happyCode);
 
                             } else {
                                 Log.i(TAG, "onComplete: couldn't update count");

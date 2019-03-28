@@ -1,10 +1,12 @@
 package com.lobxy.achs.User.Activities;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,15 +56,33 @@ public class UserComplainActivity extends AppCompatActivity {
         complaintList = new ArrayList<>();
         databaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(uid);
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                int item = (int) adapterView.getItemAtPosition(i);
+
+                String supervisorId = complaintList.get(item).getSupervisorId();
+                String supervisorName = complaintList.get(item).getSupervisorName();
+                String complaintId = complaintList.get(item).getComplaintId();
+
+                Intent intent = new Intent(UserComplainActivity.this, FeedbackActivity.class);
+                intent.putExtra("supervisorId", supervisorId);
+                intent.putExtra("supervisorName", supervisorName);
+                intent.putExtra("complaintId", complaintId);
+                startActivity(intent);
+            }
+        });
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        SetData();
+        setData();
     }
 
-    private void SetData() {
+    private void setData() {
 
         dialog.show();
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {

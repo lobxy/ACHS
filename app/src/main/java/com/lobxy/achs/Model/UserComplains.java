@@ -2,17 +2,35 @@ package com.lobxy.achs.Model;
 
 public class UserComplains {
 
-    private String type, complaintId, happyCode, complaintInitTime, completionStatus,complaintCompletionTime;
+    private String type, complaintId, happyCode, complaintInitTime, completionStatus, complaintCompletionTime, supervisorId, supervisorName;
 
     public UserComplains(){}
 
-    public UserComplains(String type, String complaintId, String happyCode, String complaintInitTime, String completionStatus, String complaintCompletionTime) {
+    public UserComplains(String type, String complaintId, String happyCode, String complaintInitTime, String completionStatus, String complaintCompletionTime, String supervisorId, String supervisorName) {
         this.type = type;
         this.complaintId = complaintId;
         this.happyCode = happyCode;
         this.complaintInitTime = complaintInitTime;
         this.completionStatus = completionStatus;
         this.complaintCompletionTime = complaintCompletionTime;
+        this.supervisorId = supervisorId;
+        this.supervisorName = supervisorName;
+    }
+
+    public String getSupervisorId() {
+        return supervisorId;
+    }
+
+    public void setSupervisorId(String supervisorId) {
+        this.supervisorId = supervisorId;
+    }
+
+    public String getSupervisorName() {
+        return supervisorName;
+    }
+
+    public void setSupervisorName(String supervisorName) {
+        this.supervisorName = supervisorName;
     }
 
     public String getComplaintCompletionTime() {
