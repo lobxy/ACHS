@@ -5,9 +5,10 @@ public class Feedback {
     public Feedback() {
     }
 
-    String userId, complaintId, feedback, rating, supervisorId, supervisorName;
+    String userId, complaintId, feedback, supervisorId, supervisorName;
+    private long rating;
 
-    public Feedback(String userId, String complaintId, String feedback, String rating, String supervisorId, String supervisorName) {
+    public Feedback(String userId, String complaintId, String feedback, long rating, String supervisorId, String supervisorName) {
         this.userId = userId;
         this.complaintId = complaintId;
         this.feedback = feedback;
@@ -48,11 +49,11 @@ public class Feedback {
         this.feedback = feedback;
     }
 
-    public String getRating() {
+    public long getRating() {
         return rating;
     }
 
-    public void setRating(String rating) {
+    public void setRating(long rating) {
         this.rating = rating;
     }
 

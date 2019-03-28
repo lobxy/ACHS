@@ -1,12 +1,14 @@
 package com.lobxy.achs.Model;
 
-public class UserComplains {
+public class UserComplaints {
+
+
+    public UserComplaints() {
+    }
 
     private String type, complaintId, happyCode, complaintInitTime, completionStatus, complaintCompletionTime, supervisorId, supervisorName;
 
-    public UserComplains(){}
-
-    public UserComplains(String type, String complaintId, String happyCode, String complaintInitTime, String completionStatus, String complaintCompletionTime, String supervisorId, String supervisorName) {
+    public UserComplaints(String type, String complaintId, String happyCode, String complaintInitTime, String completionStatus, String complaintCompletionTime, String supervisorId, String supervisorName) {
         this.type = type;
         this.complaintId = complaintId;
         this.happyCode = happyCode;

@@ -22,6 +22,7 @@ public class UserMainScreen extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_main_screen);
+
         Button profile = findViewById(R.id.profile);
         Button complaints = findViewById(R.id.complaints);
         Button userComplaints = findViewById(R.id.userComplains);

@@ -9,17 +9,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.lobxy.achs.Model.UserComplains;
+import com.lobxy.achs.Model.UserComplaints;
 import com.lobxy.achs.R;
 
 import java.util.List;
 
-public class UserComplainAdapter extends ArrayAdapter<UserComplains> {
+public class UserComplainAdapter extends ArrayAdapter<UserComplaints> {
 
     private Activity context;
-    private List<UserComplains> complaintList;
+    private List<UserComplaints> complaintList;
 
-    public UserComplainAdapter(Activity context, List<UserComplains> complaintList) {
+    public UserComplainAdapter(Activity context, List<UserComplaints> complaintList) {
         super(context, R.layout.complaints_user_list_item, complaintList);
         this.context = context;
         this.complaintList = complaintList;
@@ -35,15 +35,13 @@ public class UserComplainAdapter extends ArrayAdapter<UserComplains> {
             listViewItem = inflater.inflate(R.layout.complaints_user_list_item, null, true);
         }
 
-        TextView happyCode = listViewItem.findViewById(R.id.happycode);
         TextView complaintDate = listViewItem.findViewById(R.id.complaintDate);
         TextView complaintType = listViewItem.findViewById(R.id.complaintType);
         TextView completionStatus = listViewItem.findViewById(R.id.completionStatus);
         TextView supervisorName = listViewItem.findViewById(R.id.supervisorName);
 
-        UserComplains myComplaints = complaintList.get(position);
+        UserComplaints myComplaints = complaintList.get(position);
 
-        happyCode.setText("Happy Code: " + myComplaints.getHappyCode());
         complaintDate.setText("Complaint Time: " + myComplaints.getComplaintInitTime());
         complaintType.setText("Type: " + myComplaints.getType());
         completionStatus.setText("Status: " + myComplaints.getCompletionStatus());

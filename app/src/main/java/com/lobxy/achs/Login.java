@@ -1,16 +1,14 @@
 package com.lobxy.achs;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,7 +18,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,98 +26,47 @@ import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Admin.AdminMainScreen;
 import com.lobxy.achs.Supervisor.SupervisorMain;
 import com.lobxy.achs.User.Activities.UserMainScreen;
+import com.lobxy.achs.User.Utils.Connection;
 import com.lobxy.achs.User.Utils.mAlertDialog;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Login extends AppCompatActivity {
 
     private static final String TAG = "Login";
+
     private EditText edit_email, edit_pwd;
 
-    public Button btn_login, btn_signUp, forgotPassword;
+    public Button btn_login, btn_signUp, btn_forgotPassword;
 
     private FirebaseAuth mAuth;
-    FirebaseAuth.AuthStateListener authStateListener;
 
     DatabaseReference usersNodeRef;
-    FirebaseUser user;
 
-    String uid;
-
-    private ProgressDialog dialog;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        dialog = new ProgressDialog(this);
-        dialog.setInverseBackgroundForced(false);
-        dialog.setCancelable(false);
-        dialog.setMessage("Working...");
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setInverseBackgroundForced(false);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Working...");
 
         edit_pwd = findViewById(R.id.login_edit_password);
         edit_email = findViewById(R.id.login_edit_email);
 
         btn_login = findViewById(R.id.login_button_submit);
         btn_signUp = findViewById(R.id.login_button_signup);
-        forgotPassword = findViewById(R.id.login_button_forgotPassword);
+        btn_forgotPassword = findViewById(R.id.login_button_forgotPassword);
 
         mAuth = FirebaseAuth.getInstance();
         usersNodeRef = FirebaseDatabase.getInstance().getReference().child("Users");
 
-        authStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                user = mAuth.getCurrentUser();
-                if (user != null) {
-                    uid = user.getUid();
-                    checkUser();
-                }
-            }
-        };
-
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = edit_email.getText().toString();
-                String password = edit_pwd.getText().toString();
-
-                if (email.isEmpty()) {
-                    edit_email.setError("Email is Empty");
-                    edit_email.requestFocus();
-                    return;
-                }
-                if (!isEmailValid(email)) {
-                    edit_email.setError("Email is Invalid");
-                    edit_email.requestFocus();
-                    return;
-                }
-                if (password.isEmpty()) {
-                    edit_pwd.setError("Password is empty");
-                    edit_pwd.requestFocus();
-                    return;
-                }
-
-                dialog.show();
-                if (connectivity()) {
-                    mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            dialog.dismiss();
-                            if (task.isSuccessful()) {
-                                checkUser();
-                            } else {
-                                Toast.makeText(Login.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    });
-                } else {
-                    dialog.dismiss();
-                    Toast.makeText(Login.this, "Please connect to Internet", Toast.LENGTH_LONG).show();
-                }
+                validation();
             }
         });
 
@@ -130,7 +76,8 @@ public class Login extends AppCompatActivity {
                 startActivity(new Intent(Login.this, Register.class));
             }
         });
-        forgotPassword.setOnClickListener(new View.OnClickListener() {
+
+        btn_forgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
@@ -142,9 +89,10 @@ public class Login extends AppCompatActivity {
                 builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
+                        dialog.dismiss();
+
                         String email = editText.getText().toString().trim();
-                        if (isEmailValid(email)) {
+                        if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                             sendEmail(email);
                         } else {
                             Toast.makeText(Login.this, "Email is Invalid", Toast.LENGTH_LONG).show();
@@ -164,69 +112,65 @@ public class Login extends AppCompatActivity {
 
     }
 
-    //send reset password email to the user
-    private void sendEmail(String email) {
-        dialog.show();
-        mAuth.sendPasswordResetEmail(email).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                dialog.dismiss();
-                if (task.isSuccessful()) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
-                    builder.setTitle("Reset Password!");
-                    builder.setMessage("Reset password Email is sent to given Email Account.\nPlease follow the link and login again.")
-                            .setCancelable(false)
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    dialogInterface.dismiss();
-                                }
-                            });
-                    AlertDialog alertDialog = builder.create();
-                    alertDialog.show();
-                } else {
-                    Toast.makeText(Login.this, "Failed to send Email, try again!", Toast.LENGTH_LONG).show();
-                    recreate();
-                }
-            }
-        });
+    private void validation() {
+        String email = edit_email.getText().toString().trim();
+        String password = edit_pwd.getText().toString().trim();
 
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAuth.addAuthStateListener(authStateListener);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (authStateListener != null) {
-            mAuth.removeAuthStateListener(authStateListener);
+        if (email.isEmpty()) {
+            edit_email.setError("Email is Empty");
+            edit_email.requestFocus();
+            return;
         }
-    }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            edit_email.setError("Email is Invalid");
+            edit_email.requestFocus();
+            return;
+        }
+        if (password.isEmpty()) {
+            edit_pwd.setError("Password is empty");
+            edit_pwd.requestFocus();
+            return;
+        }
 
-    public boolean isEmailValid(String email) {
-        String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
-        Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(email);
-        return matcher.matches();
+        progressDialog.show();
+
+        Connection connection = new Connection(Login.this);
+
+        if (connection.check()) {
+            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    progressDialog.dismiss();
+
+                    if (task.isSuccessful()) {
+                        checkUser(task.getResult().getUser().getUid());
+
+                    } else {
+                        Toast.makeText(Login.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        } else {
+            progressDialog.dismiss();
+            Toast.makeText(Login.this, "Please connect to Internet", Toast.LENGTH_LONG).show();
+        }
+
     }
 
     //Check the type of user, and redirect them to their respective Activities.
-    public void checkUser() {
-        dialog.show();
-
+    public void checkUser(String uid) {
+        progressDialog.show();
 
         usersNodeRef.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                dialog.dismiss();
+                progressDialog.dismiss();
 
                 if (dataSnapshot.exists()) {
                     String type = dataSnapshot.child("type").getValue(String.class);
-                    Log.i(TAG, "onDataChange: type" + type);
+
+                    Log.i(TAG, "onDataChange: type: " + type);
+
                     if (type != null) {
                         if (type.equalsIgnoreCase("Supervisor")) {
                             startActivity(new Intent(Login.this, SupervisorMain.class));
@@ -247,7 +191,7 @@ public class Login extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                dialog.dismiss();
+                progressDialog.dismiss();
 
                 Log.i(TAG, "onCancelled: DatabaseError Get uid reference " + databaseError.getMessage());
                 Toast.makeText(Login.this, databaseError.getMessage(), Toast.LENGTH_LONG).show();
@@ -255,11 +199,33 @@ public class Login extends AppCompatActivity {
         });
     }
 
-    public boolean connectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+    //send reset password email to the user
+    private void sendEmail(String email) {
+        progressDialog.show();
+        mAuth.sendPasswordResetEmail(email).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                progressDialog.dismiss();
+                if (task.isSuccessful()) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                    builder.setTitle("Reset Password!");
+                    builder.setMessage("Reset password Email is sent to given Email Account.\nPlease follow the link and login again.")
+                            .setCancelable(false)
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            });
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                } else {
+                    Toast.makeText(Login.this, "Failed to send Email, try again!", Toast.LENGTH_LONG).show();
+                    recreate();
+                }
+            }
+        });
 
-        return networkInfo != null && networkInfo.isConnected();
     }
 
     @Override

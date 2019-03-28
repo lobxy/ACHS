@@ -18,7 +18,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Adapters.UserComplainAdapter;
-import com.lobxy.achs.Model.UserComplains;
+import com.lobxy.achs.Model.UserComplaints;
 import com.lobxy.achs.R;
 
 import java.util.ArrayList;
@@ -26,16 +26,17 @@ import java.util.List;
 
 public class UserComplainActivity extends AppCompatActivity {
 
+    private ListView listView;
+    private List<UserComplaints> complaintList;
 
-    ListView listView;
-    DatabaseReference databaseReference;
-    List<UserComplains> complaintList;
-    FirebaseAuth mAuth;
-    String uid;
+    private FirebaseAuth mAuth;
+    private DatabaseReference databaseReference;
 
-    TextView noComplaintTextView;
+    private String mUid;
 
-    ProgressDialog dialog;
+    private TextView noComplaintTextView;
+
+    private ProgressDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,28 +49,28 @@ public class UserComplainActivity extends AppCompatActivity {
         dialog.setMessage("Working...");
 
         mAuth = FirebaseAuth.getInstance();
-        uid = mAuth.getCurrentUser().getUid();
+        mUid = mAuth.getCurrentUser().getUid();
 
         noComplaintTextView = findViewById(R.id.userComplaints_textview);
 
         listView = findViewById(R.id.myComplaintsListView);
         complaintList = new ArrayList<>();
-        databaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(uid);
+        databaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(mUid);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-                int item = (int) adapterView.getItemAtPosition(i);
-
-                String supervisorId = complaintList.get(item).getSupervisorId();
-                String supervisorName = complaintList.get(item).getSupervisorName();
-                String complaintId = complaintList.get(item).getComplaintId();
+                String supervisorId = complaintList.get(i).getSupervisorId();
+                String supervisorName = complaintList.get(i).getSupervisorName();
+                String complaintId = complaintList.get(i).getComplaintId();
+                String happyCode = complaintList.get(i).getHappyCode();
 
                 Intent intent = new Intent(UserComplainActivity.this, FeedbackActivity.class);
                 intent.putExtra("supervisorId", supervisorId);
                 intent.putExtra("supervisorName", supervisorName);
                 intent.putExtra("complaintId", complaintId);
+                intent.putExtra("happyCode", happyCode);
                 startActivity(intent);
             }
         });
@@ -91,7 +92,7 @@ public class UserComplainActivity extends AppCompatActivity {
                 complaintList.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot reqSnap : dataSnapshot.getChildren()) {
-                        UserComplains complains = reqSnap.getValue(UserComplains.class);
+                        UserComplaints complains = reqSnap.getValue(UserComplaints.class);
                         complaintList.add(complains);
                     }
 
