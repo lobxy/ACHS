@@ -10,7 +10,7 @@
     <EditText
         android:id="@+id/form_edit_desciption"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="150dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -29,33 +29,35 @@
     <TextView
         android:id="@+id/pickTime"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:background="@drawable/buttonbackground"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
         android:padding="10dp"
         android:text="Visit Time"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="16sp"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/form_button_show_time"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/form_edit_desciption" />
+        app:layout_constraintTop_toTopOf="@+id/form_button_show_time" />
 
-    <TextView
-        android:id="@+id/form_text_show_time"
+    <Button
+        android:id="@+id/form_button_show_time"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/buttonbackground"
         android:padding="10dp"
         android:text="Pick"
         android:textAlignment="center"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/pickTime"
-        app:layout_constraintTop_toTopOf="@+id/pickTime" />
+        app:layout_constraintTop_toBottomOf="@+id/form_edit_desciption" />
 
     <Button
         android:id="@+id/form_button_submit"
@@ -72,5 +74,45 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/form_button_pickImage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/buttonbackground"
+        android:padding="10dp"
+        android:text="Add Image"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toStartOf="@+id/form_clearImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pickTime" />
+
+    <Button
+        android:id="@+id/form_clearImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/buttonbackground"
+        android:padding="10dp"
+        android:text="Clear Image"
+        app:layout_constraintBaseline_toBaselineOf="@+id/form_button_pickImage"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/form_image"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/form_button_submit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/form_button_pickImage"
+        app:srcCompat="@drawable/carpenter" />
 
 </android.support.constraint.ConstraintLayout>

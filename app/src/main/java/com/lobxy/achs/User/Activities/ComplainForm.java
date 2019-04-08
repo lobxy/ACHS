@@ -1,12 +1,19 @@
 package com.lobxy.achs.User.Activities;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -15,7 +22,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -30,12 +37,17 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.lobxy.achs.Model.Complain;
 import com.lobxy.achs.Model.Supervisor;
 import com.lobxy.achs.Model.UserComplaints;
 import com.lobxy.achs.R;
 import com.lobxy.achs.User.Utils.Connection;
 
+import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -45,32 +57,39 @@ import java.util.Locale;
 public class ComplainForm extends AppCompatActivity {
     private static final String TAG = "Complain Form";
 
+    public static final int PICK_IMAGE = 1;
+    public static final int CAMERA_IMAGE = 20;
+    public static final int RequestPermissionCode = 200;
+
     private EditText edit_description;
 
-    private TextView text_showTime;
-
-    private String mName, mAddress, mSite, mContact, mEmail, mVisitTime,
+    private String mName, mComplaintId, mAddress, mSite, mContact, mEmail, mVisitTime,
             mComplaintInitTime, mDescription, mType, mDate, mTime, mUid, mSupervisorId,
-            mSupervisorName, mHappyCode;
+            mSupervisorName, mHappyCode, mDownloadUrl = "";
 
     private long mSelectedSupervisorCount = 0;
 
+    private FirebaseAuth mAuth;
     private DatabaseReference complaintReference;     //For Complaints
     private DatabaseReference userComplaintsDatabaseReference;     //For User's complaints section.
 
     private ProgressDialog dialog;
 
+    private Button button_pickImage;
+    ImageView imageView;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_complain_form);
-
+        imageView = findViewById(R.id.form_image);
         dialog = new ProgressDialog(this);
         dialog.setMessage("Working...");
         dialog.setCancelable(false);
-        dialog.setInverseBackgroundForced(false);
+        dialog.setInverseBackgroundForced(true);
 
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        mAuth = FirebaseAuth.getInstance();
         mUid = mAuth.getCurrentUser().getUid();
 
         mType = getIntent().getStringExtra("Type");
@@ -79,17 +98,34 @@ public class ComplainForm extends AppCompatActivity {
 
         edit_description = findViewById(R.id.form_edit_desciption);
 
-        text_showTime = findViewById(R.id.form_text_show_time);
+        button_pickImage = findViewById(R.id.form_button_show_time);
+
+        //button for attaching image.
+        Button attachImage = findViewById(R.id.form_button_pickImage);
+        attachImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showImagePickingDialog();
+            }
+        });
 
         Button btn_submit = findViewById(R.id.form_button_submit);
 
-        text_showTime.setOnClickListener(new View.OnClickListener() {
+        btn_submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Process complaint
+                validation();
+            }
+        });
+
+        button_pickImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mDate = "";
                 mTime = "";
 
-                text_showTime.setText("Pick");
+                button_pickImage.setText("Pick");
 
                 //hide the keyboard
                 InputMethodManager inputManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
@@ -101,14 +137,109 @@ public class ComplainForm extends AppCompatActivity {
             }
         });
 
-        btn_submit.setOnClickListener(new View.OnClickListener() {
+        Button clearImage = findViewById(R.id.form_clearImage);
+        clearImage.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                //Process complaint
-                validation();
+            public void onClick(View view) {
+                if (!mDownloadUrl.isEmpty()) {
+                    mDownloadUrl = "";
+                } else {
+                    Toast.makeText(ComplainForm.this, "Image not selected", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
+
+    }
+
+    private void prepare() {
+        mComplaintId = complaintReference.push().getKey();
+        mHappyCode = createHappyCode();
+        complaintReference = complaintReference.child(mSite).child(mType);
+    }
+
+    private void showImagePickingDialog() {
+        prepare();
+        enableRuntimePermission();
+        AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle("Alert");
+        builder.setMessage("Choose a method")
+                .setCancelable(false)
+                .setPositiveButton("Import Image", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        //pick image from gallery.
+
+                        Intent intent = new Intent();
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+                    }
+                })
+                .setNegativeButton("Take Image", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        //take image from the camera.
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(intent, CAMERA_IMAGE);
+                    }
+                });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void uploadImage(Uri uri) {
+        dialog.show();
+        Log.i(TAG, "uploadImage: called uri");
+
+        final StorageReference ref = FirebaseStorage.getInstance().getReference("Complaints/");
+
+        //create folder named of uid/email and then save image on the name of complaint id. save url into complaint node.
+        ref.child(mComplaintId).putFile(uri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                dialog.dismiss();
+
+                if (task.isSuccessful()) {
+                    getDownloadUrl(ref);
+                } else {
+                    dialog.dismiss();
+                    Log.i(TAG, "onComplete: shit happened twice");
+                }
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                Log.i(TAG, String.format("onProgress: %5.2f MB transferred",
+                        taskSnapshot.getBytesTransferred() / 1024.0 / 1024.0));
+            }
+        });
+
+    }
+
+    private void getDownloadUrl(StorageReference ref) {
+        //get download url.
+        dialog.show();
+        ref.child(mComplaintId).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+
+                dialog.dismiss();
+                mDownloadUrl = uri.toString();
+                Log.d(TAG, "Image Uploaded " + mDownloadUrl);
+                Toast.makeText(ComplainForm.this, "Image Uploaded", Toast.LENGTH_SHORT).show();
+                //validation();
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                dialog.dismiss();
+
+                Log.i(TAG, "Upload image error: " + e.getMessage());
+                Toast.makeText(ComplainForm.this, "Error occurred! Try Again", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void datePicker() {
@@ -131,7 +262,7 @@ public class ComplainForm extends AppCompatActivity {
         dateDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
-                text_showTime.setText("Pick");
+                button_pickImage.setText("Pick");
             }
         });
         dateDialog.getDatePicker().setMinDate(System.currentTimeMillis() + 43200 * 1000);
@@ -160,7 +291,7 @@ public class ComplainForm extends AppCompatActivity {
 
                 Log.i(TAG, "onTimeSet: to be set" + mVisitTime);
 
-                text_showTime.setText(mVisitTime);
+                button_pickImage.setText(mVisitTime);
             }
         };
 
@@ -184,7 +315,7 @@ public class ComplainForm extends AppCompatActivity {
             edit_description.requestFocus();
             return;
         }
-        if (text_showTime.getText().toString().equals("Pick") || mVisitTime.isEmpty()) {
+        if (button_pickImage.getText().toString().equals("Pick") || mVisitTime.isEmpty()) {
             Toast.makeText(this, "Please pick a visit time.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -192,7 +323,10 @@ public class ComplainForm extends AppCompatActivity {
 
         //Upload complaint form data to the database
         if (connection.check()) {
+
             Log.i(TAG, "validation: validated");
+            if (mDownloadUrl.isEmpty()) mDownloadUrl = "Not Provided";
+
             getSupervisor();
         }
 
@@ -201,6 +335,7 @@ public class ComplainForm extends AppCompatActivity {
     }
 
     private void getSupervisor() {
+        dialog.show();
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors").child(mSite);
 
         //get the supervisor with lowest complain mSelectedSupervisorCount at the moment.
@@ -208,6 +343,7 @@ public class ComplainForm extends AppCompatActivity {
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                dialog.dismiss();
 
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -237,6 +373,7 @@ public class ComplainForm extends AppCompatActivity {
     }
 
     public void uploadComplaintData() {
+
         //Get current mTime and mDate.
         String currentDate = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
         String currentTime = DateFormat.getTimeInstance().format(Calendar.getInstance().getTime());
@@ -244,15 +381,13 @@ public class ComplainForm extends AppCompatActivity {
 
         dialog.show();
 
-        final String complaintId = complaintReference.push().getKey();
-        mHappyCode = createHappyCode();
 
         //create a new object of model class, feed the data to it.
-        final Complain complain = new Complain(mUid, complaintId, mName, mEmail, mAddress, mContact, mSite, mType, mDescription, mVisitTime, mComplaintInitTime,
+        final Complain complain = new Complain(mDownloadUrl, mUid, mComplaintId, mName, mEmail, mAddress, mContact, mSite, mType, mDescription, mVisitTime, mComplaintInitTime,
                 mHappyCode, "Unresolved", mSupervisorName, "No Data");
 
         //Upload data to the firebase
-        complaintReference.child(complaintId).setValue(complain).addOnSuccessListener(new OnSuccessListener<Void>() {
+        complaintReference.child(mComplaintId).setValue(complain).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Log.i(TAG, "onSuccess: Complaint added in UNRESOLVED");
@@ -406,14 +541,15 @@ public class ComplainForm extends AppCompatActivity {
     }
 
     private void getUserData() {
+        Log.i(TAG, "getUserData: called");
         //User database reference
-        dialog.show();
+        //dialog.show();
 
         DatabaseReference userDataReference = FirebaseDatabase.getInstance().getReference().child("User_Data").child("User").child(mUid);
         userDataReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                dialog.dismiss();
+                //    dialog.dismiss();
 
                 mName = dataSnapshot.child("name").getValue(String.class);
                 mAddress = dataSnapshot.child("address").getValue(String.class);
@@ -421,14 +557,11 @@ public class ComplainForm extends AppCompatActivity {
                 mContact = dataSnapshot.child("contact").getValue(String.class);
                 mEmail = dataSnapshot.child("email").getValue(String.class);
 
-                //Update the reference!
-                complaintReference = complaintReference.child(mSite).child(mType);
-
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                dialog.dismiss();
+                //   dialog.dismiss();
                 Log.i(TAG, "onCancelled: Upload Data error " + databaseError.getMessage());
                 showAlert("Error", databaseError.getMessage());
             }
@@ -458,4 +591,94 @@ public class ComplainForm extends AppCompatActivity {
         alertDialog.show();
     }
 
-}
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {
+            Log.i(TAG, "onActivityResult: picked image");
+            Uri uri = data.getData();
+
+            uploadImage(uri);
+
+        } else if (requestCode == CAMERA_IMAGE && resultCode == Activity.RESULT_OK) {
+            Log.i(TAG, "onActivityResult: called");
+            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+
+            imageView.setImageBitmap(bitmap);
+
+            uploadBitmapImage(bitmap);
+
+            //show image here.
+        } else {
+            Log.i(TAG, "onActivityResult: camera shit happened");
+        }
+    }
+
+    private void uploadBitmapImage(Bitmap bitmap) {
+        dialog.show();
+
+        final StorageReference ref = FirebaseStorage.getInstance().getReference("Complaints/");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+        byte[] dat = baos.toByteArray();
+
+        UploadTask uploadTask = ref.child(mComplaintId).putBytes(dat);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                dialog.dismiss();
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                dialog.dismiss();
+
+                getDownloadUrl(ref);
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                Log.i(TAG, String.format("onProgress: %5.2f MB transferred",
+                        taskSnapshot.getBytesTransferred() / 1024.0 / 1024.0));
+            }
+        });
+    }
+
+    public void enableRuntimePermission() {
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(ComplainForm.this,
+                Manifest.permission.CAMERA)) {
+
+            Toast.makeText(ComplainForm.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
+
+        } else {
+
+            ActivityCompat.requestPermissions(ComplainForm.this, new String[]{
+                    Manifest.permission.CAMERA}, RequestPermissionCode);
+
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int RC, String per[], int[] PResult) {
+
+        switch (RC) {
+
+            case RequestPermissionCode:
+
+                if (PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Toast.makeText(ComplainForm.this, "Permission Granted, Now your application can access CAMERA.", Toast.LENGTH_LONG).show();
+
+                } else {
+
+                    Toast.makeText(ComplainForm.this, "Permission Canceled, You cannot access CAMERA.", Toast.LENGTH_LONG).show();
+
+                }
+                break;
+        }
+    }
+
+}//EOC

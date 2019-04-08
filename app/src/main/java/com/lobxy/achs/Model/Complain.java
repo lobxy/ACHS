@@ -4,15 +4,15 @@ public class Complain {
 
     private String type, name, address, complaintID, description, email, contact, site,
             happyCode, visitTime, complaintInitTime, completionStatus, supervisorAssigned,
-            complaintCompletionTime, userId;
+            complaintCompletionTime, userId, imageUrl;
 
     public Complain() {
     }
 
-    public Complain(String userId, String complaintID, String name, String email, String address, String contact, String site, String type, String description,
+    public Complain(String imageUrl, String userId, String complaintID, String name, String email, String address, String contact, String site, String type, String description,
                     String visitTime, String complaintInitTime, String happyCode, String completionStatus,
                     String supervisorAssigned, String complaintCompletionTime) {
-
+        this.imageUrl = imageUrl;
         this.userId = userId;
         this.complaintID = complaintID;
         this.name = name;
@@ -29,6 +29,14 @@ public class Complain {
         this.supervisorAssigned = supervisorAssigned;
         this.complaintCompletionTime = complaintCompletionTime;
 
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getUserId() {
