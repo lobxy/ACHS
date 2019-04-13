@@ -1,10 +1,7 @@
 package com.lobxy.achs;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -22,9 +19,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Admin.AdminMainScreen;
 import com.lobxy.achs.Supervisor.SupervisorMain;
-import com.lobxy.achs.User.Activities.UserMainScreen;
+import com.lobxy.achs.User.UserMainScreenActivity;
+import com.lobxy.achs.Utils.Connection;
 
-public class SplashScreen extends AppCompatActivity {
+public class SplashScreenActivity extends AppCompatActivity {
     private static final String TAG = "Splash Screen";
     FirebaseAuth mAuth;
     FirebaseUser user;
@@ -39,7 +37,9 @@ public class SplashScreen extends AppCompatActivity {
         usersNodeRef = FirebaseDatabase.getInstance().getReference().child("Users");
         user = mAuth.getCurrentUser();
 
-        if (connectivity()) {
+        Connection connection = new Connection(this);
+
+        if (connection.check()) {
             int splashScreenTimeout = 2000;
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -48,7 +48,7 @@ public class SplashScreen extends AppCompatActivity {
                         uid = user.getUid();
                         checkUser();
                     } else {
-                        startActivity(new Intent(SplashScreen.this, Login.class));
+                        startActivity(new Intent(SplashScreenActivity.this, LoginActivity.class));
                         finish();
                     }
                 }
@@ -86,39 +86,31 @@ public class SplashScreen extends AppCompatActivity {
 
                     if (type != null) {
                         if (type.equalsIgnoreCase("User")) {
-                            startActivity(new Intent(SplashScreen.this, UserMainScreen.class));
+                            startActivity(new Intent(SplashScreenActivity.this, UserMainScreenActivity.class));
                             finish();
                         } else if (type.equalsIgnoreCase("Admin")) {
-                            startActivity(new Intent(SplashScreen.this, AdminMainScreen.class));
+                            startActivity(new Intent(SplashScreenActivity.this, AdminMainScreen.class));
                             finish();
                         } else if (type.equalsIgnoreCase("Supervisor")) {
-                            startActivity(new Intent(SplashScreen.this, SupervisorMain.class));
+                            startActivity(new Intent(SplashScreenActivity.this, SupervisorMain.class));
                             finish();
                         } else {
-                            Toast.makeText(SplashScreen.this, "Contact Support! Type not found", Toast.LENGTH_LONG).show();
+                            Toast.makeText(SplashScreenActivity.this, "Contact Support! Type not found", Toast.LENGTH_LONG).show();
                         }
                     }
                 } else {
-                    Toast.makeText(SplashScreen.this, "User not found! Please register again", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(SplashScreen.this, Login.class));
+                    Toast.makeText(SplashScreenActivity.this, "User not found! Please register again", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(SplashScreenActivity.this, LoginActivity.class));
                     finish();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(SplashScreen.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(SplashScreenActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
                 Log.i(TAG, "onCancelled: Database Error: " + databaseError.getMessage());
             }
         });
-    }
-
-    //check the internet connectivity.
-    public boolean connectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        return networkInfo != null && networkInfo.isConnected();
     }
 
 }

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#353b42"
-    tools:context=".User.Activities.FeedbackActivity">
+    tools:context=".User.FeedbackActivity">
 
     <RatingBar
         android:id="@+id/feedback_ratingBar"

@@ -1,4 +1,4 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,10 +8,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.lobxy.achs.User.CustomListview;
+import com.lobxy.achs.Adapters.ComplaintTypesListViewAdapter;
 import com.lobxy.achs.R;
 
-public class Complains extends AppCompatActivity {
+public class ComplainTypesActivity extends AppCompatActivity {
     private static final String TAG = "Complain Types";
     ListView listView;
 
@@ -31,7 +31,7 @@ public class Complains extends AppCompatActivity {
 
         listView = findViewById(R.id.complainsList);
 
-        CustomListview adapter = new CustomListview(this, labels, images);
+        ComplaintTypesListViewAdapter adapter = new ComplaintTypesListViewAdapter(this, labels, images);
         listView.setAdapter(adapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -39,7 +39,7 @@ public class Complains extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String complainType = labels[position];
                 Log.d(TAG, "onItemClick: Type: " + complainType);
-                Intent intent = new Intent(Complains.this, ComplainForm.class);
+                Intent intent = new Intent(ComplainTypesActivity.this, ComplainFormActivity.class);
                 intent.putExtra("Type", complainType);
                 startActivity(intent);
             }

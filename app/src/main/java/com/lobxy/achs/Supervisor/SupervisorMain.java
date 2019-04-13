@@ -1,11 +1,8 @@
 package com.lobxy.achs.Supervisor;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
@@ -25,9 +22,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Adapters.ComplaintAdapter;
-import com.lobxy.achs.Login;
+import com.lobxy.achs.LoginActivity;
 import com.lobxy.achs.Model.Complain;
 import com.lobxy.achs.R;
+import com.lobxy.achs.Utils.Connection;
 import com.lobxy.achs.Utils.ShowAlertDialog;
 
 import java.util.ArrayList;
@@ -99,7 +97,10 @@ public class SupervisorMain extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (connectivity()) {
+
+        Connection connection = new Connection(this);
+
+        if (connection.check()) {
             setData();
         } else {
             Toast.makeText(this, "Please connect to internet", Toast.LENGTH_LONG).show();
@@ -132,13 +133,6 @@ public class SupervisorMain extends AppCompatActivity {
                 alertDialog.showAlertDialog("Error", databaseError.getMessage());
             }
         });
-    }
-
-    public boolean connectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        return networkInfo != null && networkInfo.isConnected();
     }
 
     @Override
@@ -175,7 +169,7 @@ public class SupervisorMain extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.mainScreenMenuLogout) {
             mAuth.signOut();
-            startActivity(new Intent(this, Login.class));
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
 

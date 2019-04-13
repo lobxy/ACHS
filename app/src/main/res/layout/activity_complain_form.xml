@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#353b42"
-    tools:context=".User.Activities.ComplainForm">
+    tools:context=".User.ComplainFormActivity">
 
     <EditText
         android:id="@+id/form_edit_desciption"

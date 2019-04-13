@@ -5,4 +5,4 @@
     android:layout_height="match_parent"
     android:background="#353b42"
     android:padding="16dp"
-    tools:context=".SplashScreen" />
+    tools:context=".SplashScreenActivity" />

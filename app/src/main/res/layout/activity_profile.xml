@@ -7,7 +7,7 @@
     android:background="#353b42"
     android:fillViewport="true"
     android:orientation="vertical"
-    tools:context=".User.Activities.Profile">
+    tools:context=".User.ProfileActivity">
 
     <LinearLayout
         android:layout_width="match_parent"

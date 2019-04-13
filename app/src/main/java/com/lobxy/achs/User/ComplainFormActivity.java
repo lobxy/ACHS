@@ -1,4 +1,4 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.Manifest;
 import android.app.Activity;
@@ -45,7 +45,9 @@ import com.lobxy.achs.Model.Complain;
 import com.lobxy.achs.Model.Supervisor;
 import com.lobxy.achs.Model.UserComplaints;
 import com.lobxy.achs.R;
-import com.lobxy.achs.User.Utils.Connection;
+import com.lobxy.achs.Utils.Connection;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
@@ -54,7 +56,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class ComplainForm extends AppCompatActivity {
+public class ComplainFormActivity extends AppCompatActivity {
     private static final String TAG = "Complain Form";
 
     public static final int PICK_IMAGE = 1;
@@ -77,7 +79,6 @@ public class ComplainForm extends AppCompatActivity {
 
     private Button button_pickImage;
     ImageView imageView;
-//sadasdasdasd
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +145,7 @@ public class ComplainForm extends AppCompatActivity {
                 if (!mDownloadUrl.isEmpty()) {
                     mDownloadUrl = "";
                 } else {
-                    Toast.makeText(ComplainForm.this, "Image not selected", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ComplainFormActivity.this, "Image not selected", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -227,7 +228,7 @@ public class ComplainForm extends AppCompatActivity {
                 dialog.dismiss();
                 mDownloadUrl = uri.toString();
                 Log.d(TAG, "Image Uploaded " + mDownloadUrl);
-                Toast.makeText(ComplainForm.this, "Image Uploaded", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ComplainFormActivity.this, "Image Uploaded", Toast.LENGTH_SHORT).show();
                 //validation();
 
             }
@@ -237,10 +238,22 @@ public class ComplainForm extends AppCompatActivity {
                 dialog.dismiss();
 
                 Log.i(TAG, "Upload image error: " + e.getMessage());
-                Toast.makeText(ComplainForm.this, "Error occurred! Try Again", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ComplainFormActivity.this, "Error occurred! Try Again", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+    private void cropImage() {
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setRequestedSize(500, 500)
+                .setAspectRatio(1, 1)
+                .start(this);
+    }
+
+    // <-------------------------------------------------->
+
+    //Submit Complain Data.
 
     private void datePicker() {
         final Calendar c = Calendar.getInstance();
@@ -472,7 +485,7 @@ public class ComplainForm extends AppCompatActivity {
 
                             Log.i(TAG, "onComplete: Supervisor Assigned");
 
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ComplainForm.this);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ComplainFormActivity.this);
                             builder.setTitle(mHappyCode);
                             builder.setMessage("Please take a note of this HAPPY CODE or you can find it in MY COMPLAINTS.")
                                     .setCancelable(false)
@@ -481,7 +494,7 @@ public class ComplainForm extends AppCompatActivity {
                                         public void onClick(DialogInterface dialogInterface, int i) {
 
                                             dialogInterface.dismiss();
-                                            startActivity(new Intent(ComplainForm.this, UserMainScreen.class));
+                                            startActivity(new Intent(ComplainFormActivity.this, UserMainScreenActivity.class));
                                             finish();
 
                                         }
@@ -648,14 +661,14 @@ public class ComplainForm extends AppCompatActivity {
 
     public void enableRuntimePermission() {
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(ComplainForm.this,
+        if (ActivityCompat.shouldShowRequestPermissionRationale(ComplainFormActivity.this,
                 Manifest.permission.CAMERA)) {
 
-            Toast.makeText(ComplainForm.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
+            Toast.makeText(ComplainFormActivity.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
 
         } else {
 
-            ActivityCompat.requestPermissions(ComplainForm.this, new String[]{
+            ActivityCompat.requestPermissions(ComplainFormActivity.this, new String[]{
                     Manifest.permission.CAMERA}, RequestPermissionCode);
 
         }
@@ -668,14 +681,8 @@ public class ComplainForm extends AppCompatActivity {
 
             case RequestPermissionCode:
 
-                if (PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    Toast.makeText(ComplainForm.this, "Permission Granted, Now your application can access CAMERA.", Toast.LENGTH_LONG).show();
-
-                } else {
-
-                    Toast.makeText(ComplainForm.this, "Permission Canceled, You cannot access CAMERA.", Toast.LENGTH_LONG).show();
-
+                if (!(PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(ComplainFormActivity.this, "Permission Canceled, You cannot access CAMERA.", Toast.LENGTH_LONG).show();
                 }
                 break;
         }

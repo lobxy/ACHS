@@ -1,11 +1,11 @@
-package com.lobxy.achs.User.Utils;
+package com.lobxy.achs.Utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 public class Connection {
-    Context context;
+    private Context context;
 
     public Connection(Context context) {
         this.context = context;

@@ -1,4 +1,4 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.lobxy.achs.Model.Feedback;
 import com.lobxy.achs.R;
-import com.lobxy.achs.User.Utils.Connection;
+import com.lobxy.achs.Utils.Connection;
 
 public class FeedbackActivity extends AppCompatActivity {
 

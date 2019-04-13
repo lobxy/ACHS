@@ -1,11 +1,8 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
@@ -28,11 +25,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Model.UserReg;
 import com.lobxy.achs.R;
-import com.lobxy.achs.Register;
+import com.lobxy.achs.RegisterActivity;
+import com.lobxy.achs.Utils.Connection;
 
-public class Profile extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity {
 
-    private static final String TAG = "Profile Activity";
+    private static final String TAG = "ProfileActivity Activity";
     ProgressDialog dialog;
 
     DatabaseReference ref;
@@ -45,10 +43,14 @@ public class Profile extends AppCompatActivity {
 
     ArrayAdapter<String> dataAdapter;
 
+    Connection connection = new Connection(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
+
+        connection = new Connection(this);
 
         auth = FirebaseAuth.getInstance();
         uid = auth.getCurrentUser().getUid();
@@ -79,7 +81,7 @@ public class Profile extends AppCompatActivity {
 
         //Show loading screen and get the users data from the Database;
 
-        if (connectivity()) {
+        if (connection.check()) {
             LoadData();
         } else {
             Toast.makeText(this, "Please check your Internet Connection.", Toast.LENGTH_SHORT).show();
@@ -102,7 +104,7 @@ public class Profile extends AppCompatActivity {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ValidateData();
+                validateData();
             }
         });
     }
@@ -156,10 +158,10 @@ public class Profile extends AppCompatActivity {
                     dialog.dismiss();
 
                 } else {
-                    Toast.makeText(Profile.this, "User Data doesn't exists! Contact Support.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ProfileActivity.this, "User Data doesn't exists! Contact Support.", Toast.LENGTH_LONG).show();
                     dialog.dismiss();
                     //Ask the user to enter registration details again.
-                    startActivity(new Intent(Profile.this, Register.class));
+                    startActivity(new Intent(ProfileActivity.this, RegisterActivity.class));
                     finish();
                 }
             }
@@ -172,7 +174,7 @@ public class Profile extends AppCompatActivity {
         });
     }
 
-    private void ValidateData() {
+    private void validateData() {
         name = nameField.getText().toString();
         address = addressField.getText().toString();
         contact = contactField.getText().toString();
@@ -204,14 +206,15 @@ public class Profile extends AppCompatActivity {
             return;
         }
         site = siteSpinner.getSelectedItem().toString();
-        SaveData(auth.getCurrentUser().getEmail(), uid, name, contact, address, site);
+
+        saveData(auth.getCurrentUser().getEmail(), uid, name, contact, address, site);
     }
 
 
-    private void SaveData(final String email, final String uid, final String name, final String contact, final String address, final String site) {
+    private void saveData(final String email, final String uid, final String name, final String contact, final String address, final String site) {
         //Show an alert dialog first, if pressed confirm, save the data.
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(Profile.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
         builder.setTitle("Alert!!");
         builder.setMessage("Click confirm to update your information.")
                 .setCancelable(false)
@@ -220,17 +223,18 @@ public class Profile extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                         //Check internet connectivity and Update the data on user data node reference!
-                        if (connectivity()) {
+
+                        if (connection.check()) {
                             //Update the data.Use Hash-Map if required.
                             dialog.show();
                             UserReg userRegister = new UserReg(email, password, uid, name, contact, address, site);
-                            ref.setValue(userRegister).addOnSuccessListener(Profile.this, new OnSuccessListener<Void>() {
+                            ref.setValue(userRegister).addOnSuccessListener(ProfileActivity.this, new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
                                     Log.i(TAG, "onSuccess: Data Update Success!");
-                                    Toast.makeText(Profile.this, "Information Updated!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ProfileActivity.this, "Information Updated!", Toast.LENGTH_SHORT).show();
                                 }
-                            }).addOnFailureListener(Profile.this, new OnFailureListener() {
+                            }).addOnFailureListener(ProfileActivity.this, new OnFailureListener() {
                                 @Override
                                 public void onFailure(@NonNull Exception e) {
                                     Log.i(TAG, "onFailure: Data Update failure: " + e.getMessage());
@@ -255,13 +259,6 @@ public class Profile extends AppCompatActivity {
                 });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
-    }
-
-    public boolean connectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        return networkInfo != null && networkInfo.isConnected();
     }
 
     public void showAlert(String title, String message) {

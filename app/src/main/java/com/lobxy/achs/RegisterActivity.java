@@ -1,11 +1,8 @@
 package com.lobxy.achs;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
@@ -29,13 +26,14 @@ import com.google.firebase.auth.FirebaseAuthActionCodeException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.lobxy.achs.User.Activities.UserMainScreen;
 import com.lobxy.achs.Model.User;
 import com.lobxy.achs.Model.UserReg;
+import com.lobxy.achs.User.UserMainScreenActivity;
+import com.lobxy.achs.Utils.Connection;
 
-public class Register extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
 
-    private static final String TAG = "Register Activity";
+    private static final String TAG = "RegisterActivity Activity";
     EditText edit_password_confirm, edit_password, edit_email, edit_name, edit_contact, edit_address;
 
     Spinner siteSpinner;
@@ -163,7 +161,9 @@ public class Register extends AppCompatActivity {
         }
 
         dialog.show();
-        if (connectivity()) {
+        Connection connection = new Connection(this);
+
+        if (connection.check()) {
             mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
@@ -177,9 +177,9 @@ public class Register extends AppCompatActivity {
                         dialog.dismiss();
                         //If the Email Already exists
                         if (task.getException() instanceof FirebaseAuthActionCodeException) {
-                            Toast.makeText(Register.this, "You are already registered!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(RegisterActivity.this, "You are already registered!", Toast.LENGTH_LONG).show();
                         }
-                        Toast.makeText(Register.this, "User Creation Failed, Try Again!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(RegisterActivity.this, "User Creation Failed, Try Again!", Toast.LENGTH_LONG).show();
                         Log.i(TAG, "onComplete: User Creation Error" + task.getException().getMessage());
                     }
                 }
@@ -187,7 +187,7 @@ public class Register extends AppCompatActivity {
 
         } else {
             dialog.dismiss();
-            Toast.makeText(Register.this, "Please check your Internet Connection.", Toast.LENGTH_LONG).show();
+            Toast.makeText(RegisterActivity.this, "Please check your Internet Connection.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -209,9 +209,9 @@ public class Register extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(Register.this, "Welcome", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RegisterActivity.this, "Welcome", Toast.LENGTH_SHORT).show();
                             } else {
-                                Toast.makeText(Register.this, "Error: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                Toast.makeText(RegisterActivity.this, "Error: " + task.getException().getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             }
                         }
                     });
@@ -231,7 +231,7 @@ public class Register extends AppCompatActivity {
                                             if (task.isSuccessful()) {
                                                 //User removed!
                                                 //Inform the user to register again.
-                                                AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
+                                                AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
                                                 builder.setTitle("Alert");
                                                 builder.setMessage("User Registration Failed. Click OK and register again.")
                                                         .setCancelable(false)
@@ -247,7 +247,7 @@ public class Register extends AppCompatActivity {
                                             } else {
                                                 //Handle the exception
                                                 Log.d(TAG, "onComplete: user removal error: " + task.getException());
-                                                Toast.makeText(Register.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
+                                                Toast.makeText(RegisterActivity.this, "onComplete: user removal error: " + task.getException(), Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     });
@@ -260,14 +260,8 @@ public class Register extends AppCompatActivity {
 
         dialog.dismiss();
         //send user to the Main Screen
-        startActivity(new Intent(this, UserMainScreen.class));
+        startActivity(new Intent(this, UserMainScreenActivity.class));
         finish();
-    }
-
-    public boolean connectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
     }
 
 }

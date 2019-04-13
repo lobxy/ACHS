@@ -6,7 +6,7 @@
     android:background="#353b42"
     android:orientation="vertical"
     android:padding="5dp"
-    tools:context=".User.Activities.UserComplainActivity">
+    tools:context=".User.UserComplainActivity">
 
     <TextView
         android:id="@+id/userComplaints_textview"

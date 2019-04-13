@@ -22,7 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Model.Supervisor;
 import com.lobxy.achs.R;
-import com.lobxy.achs.User.Utils.Connection;
+import com.lobxy.achs.Utils.Connection;
 import com.lobxy.achs.Utils.ShowAlertDialog;
 
 import java.text.DateFormat;

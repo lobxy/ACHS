@@ -25,13 +25,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Admin.AdminMainScreen;
 import com.lobxy.achs.Supervisor.SupervisorMain;
-import com.lobxy.achs.User.Activities.UserMainScreen;
-import com.lobxy.achs.User.Utils.Connection;
-import com.lobxy.achs.User.Utils.mAlertDialog;
+import com.lobxy.achs.User.UserMainScreenActivity;
+import com.lobxy.achs.Utils.Connection;
 
-public class Login extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "Login";
+    private static final String TAG = "LoginActivity";
 
     private EditText edit_email, edit_pwd;
 
@@ -73,17 +72,17 @@ public class Login extends AppCompatActivity {
         btn_signUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(Login.this, Register.class));
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             }
         });
 
         btn_forgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                final AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
                 builder.setTitle("Alert!");
                 builder.setMessage("Enter your email address");
-                final EditText editText = new EditText(Login.this);
+                final EditText editText = new EditText(LoginActivity.this);
                 builder.setView(editText);
 
                 builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
@@ -95,7 +94,7 @@ public class Login extends AppCompatActivity {
                         if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                             sendEmail(email);
                         } else {
-                            Toast.makeText(Login.this, "Email is Invalid", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Email is Invalid", Toast.LENGTH_LONG).show();
                         }
 
                     }
@@ -134,7 +133,7 @@ public class Login extends AppCompatActivity {
 
         progressDialog.show();
 
-        Connection connection = new Connection(Login.this);
+        Connection connection = new Connection(LoginActivity.this);
 
         if (connection.check()) {
             mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -146,13 +145,13 @@ public class Login extends AppCompatActivity {
                         checkUser(task.getResult().getUser().getUid());
 
                     } else {
-                        Toast.makeText(Login.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
             });
         } else {
             progressDialog.dismiss();
-            Toast.makeText(Login.this, "Please connect to Internet", Toast.LENGTH_LONG).show();
+            Toast.makeText(LoginActivity.this, "Please connect to Internet", Toast.LENGTH_LONG).show();
         }
 
     }
@@ -173,19 +172,19 @@ public class Login extends AppCompatActivity {
 
                     if (type != null) {
                         if (type.equalsIgnoreCase("Supervisor")) {
-                            startActivity(new Intent(Login.this, SupervisorMain.class));
+                            startActivity(new Intent(LoginActivity.this, SupervisorMain.class));
                         } else if (type.equalsIgnoreCase("User")) {
-                            startActivity(new Intent(Login.this, UserMainScreen.class));
+                            startActivity(new Intent(LoginActivity.this, UserMainScreenActivity.class));
                         } else if (type.equalsIgnoreCase("Admin")) {
-                            startActivity(new Intent(Login.this, AdminMainScreen.class));
+                            startActivity(new Intent(LoginActivity.this, AdminMainScreen.class));
                         } else {
-                            Toast.makeText(Login.this, "Error:Login-submit-task-Success-userType", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Error:LoginActivity-submit-task-Success-userType", Toast.LENGTH_LONG).show();
                         }
                     }else{
-                        Toast.makeText(Login.this, "Contact Support: User type doesn't exists", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Contact Support: User type doesn't exists", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(Login.this, "User not found. Please login Again or Register", Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, "User not found. Please login Again or RegisterActivity", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -194,7 +193,7 @@ public class Login extends AppCompatActivity {
                 progressDialog.dismiss();
 
                 Log.i(TAG, "onCancelled: DatabaseError Get uid reference " + databaseError.getMessage());
-                Toast.makeText(Login.this, databaseError.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(LoginActivity.this, databaseError.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -207,7 +206,7 @@ public class Login extends AppCompatActivity {
             public void onComplete(@NonNull Task<Void> task) {
                 progressDialog.dismiss();
                 if (task.isSuccessful()) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
                     builder.setTitle("Reset Password!");
                     builder.setMessage("Reset password Email is sent to given Email Account.\nPlease follow the link and login again.")
                             .setCancelable(false)
@@ -220,7 +219,7 @@ public class Login extends AppCompatActivity {
                     AlertDialog alertDialog = builder.create();
                     alertDialog.show();
                 } else {
-                    Toast.makeText(Login.this, "Failed to send Email, try again!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, "Failed to send Email, try again!", Toast.LENGTH_LONG).show();
                     recreate();
                 }
             }
@@ -228,9 +227,4 @@ public class Login extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onBackPressed() {
-        mAlertDialog dialog = new mAlertDialog(this);
-        dialog.alertDialog();
-    }
-}
+}//EOC

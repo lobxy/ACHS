@@ -1,4 +1,4 @@
-package com.lobxy.achs.User;
+package com.lobxy.achs.Adapters;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -10,13 +10,13 @@ import android.widget.TextView;
 
 import com.lobxy.achs.R;
 
-public class CustomListview extends ArrayAdapter<String> {
+public class ComplaintTypesListViewAdapter extends ArrayAdapter<String> {
 
     private final Activity context;
     private final String[] labels;
     private final Integer[] images;
 
-    public CustomListview(Activity context, String[] labels, Integer[] images) {
+    public ComplaintTypesListViewAdapter(Activity context, String[] labels, Integer[] images) {
         super(context, R.layout.complain_listitem, labels);
         this.context = context;
         this.images = images;

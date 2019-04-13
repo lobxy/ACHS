@@ -1,4 +1,4 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -20,6 +20,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.lobxy.achs.Adapters.UserComplainAdapter;
 import com.lobxy.achs.Model.UserComplaints;
 import com.lobxy.achs.R;
+import com.lobxy.achs.Utils.Connection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,33 +30,30 @@ public class UserComplainActivity extends AppCompatActivity {
     private ListView listView;
     private List<UserComplaints> complaintList;
 
-    private FirebaseAuth mAuth;
-    private DatabaseReference databaseReference;
+    private DatabaseReference reference;
 
-    private String mUid;
+    private TextView text_noComplaint;
 
-    private TextView noComplaintTextView;
-
-    private ProgressDialog dialog;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_complains);
 
-        dialog = new ProgressDialog(this);
-        dialog.setInverseBackgroundForced(false);
-        dialog.setCancelable(false);
-        dialog.setMessage("Working...");
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setInverseBackgroundForced(false);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Working...");
 
-        mAuth = FirebaseAuth.getInstance();
-        mUid = mAuth.getCurrentUser().getUid();
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        String mUid = mAuth.getCurrentUser().getUid();
 
-        noComplaintTextView = findViewById(R.id.userComplaints_textview);
+        text_noComplaint = findViewById(R.id.userComplaints_textview);
 
         listView = findViewById(R.id.myComplaintsListView);
         complaintList = new ArrayList<>();
-        databaseReference = FirebaseDatabase.getInstance().getReference("User_complaints").child(mUid);
+        reference = FirebaseDatabase.getInstance().getReference("User_complaints").child(mUid);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -80,13 +78,18 @@ public class UserComplainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        setData();
+
+        Connection connection = new Connection(this);
+        if (connection.check()) setData();
+        else {
+            Toast.makeText(this, "Connect to internet", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setData() {
 
-        dialog.show();
-        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+        progressDialog.show();
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 complaintList.clear();
@@ -96,19 +99,19 @@ public class UserComplainActivity extends AppCompatActivity {
                         complaintList.add(complains);
                     }
 
-                    dialog.dismiss();
+                    progressDialog.dismiss();
                     UserComplainAdapter adapter = new UserComplainAdapter(UserComplainActivity.this, complaintList);
                     listView.setAdapter(adapter);
                 } else {
-                    dialog.dismiss();
-                    noComplaintTextView.setVisibility(View.VISIBLE);
+                    progressDialog.dismiss();
+                    text_noComplaint.setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(UserComplainActivity.this, "Error: " + databaseError.getDetails(), Toast.LENGTH_LONG).show();
-                dialog.dismiss();
+                progressDialog.dismiss();
             }
         });
     }

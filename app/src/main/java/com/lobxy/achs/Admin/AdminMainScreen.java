@@ -13,7 +13,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.lobxy.achs.Login;
+import com.lobxy.achs.LoginActivity;
 import com.lobxy.achs.R;
 
 
@@ -95,7 +95,7 @@ public class AdminMainScreen extends AppCompatActivity {
         if (item.getItemId() == R.id.logout) {
             FirebaseAuth auth = FirebaseAuth.getInstance();
             auth.signOut();
-            startActivity(new Intent(this, Login.class));
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
         return super.onOptionsItemSelected(item);

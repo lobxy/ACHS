@@ -1,4 +1,4 @@
-package com.lobxy.achs.User.Activities;
+package com.lobxy.achs.User;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,11 +10,10 @@ import android.view.View;
 import android.widget.Button;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.lobxy.achs.Login;
+import com.lobxy.achs.LoginActivity;
 import com.lobxy.achs.R;
-import com.lobxy.achs.User.Utils.mAlertDialog;
 
-public class UserMainScreen extends AppCompatActivity implements View.OnClickListener {
+public class UserMainScreenActivity extends AppCompatActivity implements View.OnClickListener {
 
     FirebaseAuth auth;
 
@@ -41,10 +40,10 @@ public class UserMainScreen extends AppCompatActivity implements View.OnClickLis
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.profile:
-                startActivity(new Intent(this, Profile.class));
+                startActivity(new Intent(this, ProfileActivity.class));
                 break;
             case R.id.complaints:
-                startActivity(new Intent(this, Complains.class));
+                startActivity(new Intent(this, ComplainTypesActivity.class));
                 break;
             case R.id.userComplains:
                 startActivity(new Intent(this, UserComplainActivity.class));
@@ -65,17 +64,11 @@ public class UserMainScreen extends AppCompatActivity implements View.OnClickLis
             case R.id.mainScreenMenuLogout:
                 //signOut the user and return him to login screen
                 auth.signOut();
-                startActivity(new Intent(this, Login.class));
+                startActivity(new Intent(this, LoginActivity.class));
                 finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        mAlertDialog mAlertDialog = new mAlertDialog(this);
-        mAlertDialog.alertDialog();
     }
 
 }
