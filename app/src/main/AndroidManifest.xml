@@ -57,6 +57,7 @@
             android:name=".Supervisor.SupervisorDetail"
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".Supervisor.SupervisorMain" />
+        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity" />
     </application>
 
 </manifest>

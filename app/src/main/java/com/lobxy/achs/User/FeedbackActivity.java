@@ -115,7 +115,7 @@ public class FeedbackActivity extends AppCompatActivity {
         dialog.show();
         Feedback feedback = new Feedback(mUserId, mComplaintId, mFeedback, mRating, mSupervisorId, mSupervisorName);
 
-        mFeedbackReference.child(mSupervisorId).setValue(feedback).addOnCompleteListener(new OnCompleteListener<Void>() {
+        mFeedbackReference.child(mSupervisorId).child(mComplaintId).setValue(feedback).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 dialog.dismiss();
@@ -123,7 +123,7 @@ public class FeedbackActivity extends AppCompatActivity {
                     Toast.makeText(FeedbackActivity.this, "Feedback submitted", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(FeedbackActivity.this, "Error occured", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FeedbackActivity.this, "Error occurred", Toast.LENGTH_SHORT).show();
                     Log.i(TAG, "onComplete: error: " + task.getException().getMessage());
                 }
             }

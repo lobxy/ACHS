@@ -1,19 +1,18 @@
 package com.lobxy.achs.User;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -49,7 +48,6 @@ import com.lobxy.achs.Utils.Connection;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
-import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -57,11 +55,8 @@ import java.util.Date;
 import java.util.Locale;
 
 public class ComplainFormActivity extends AppCompatActivity {
-    private static final String TAG = "Complain Form";
 
-    public static final int PICK_IMAGE = 1;
-    public static final int CAMERA_IMAGE = 20;
-    public static final int RequestPermissionCode = 200;
+    private static final String TAG = "Complain Form";
 
     private EditText edit_description;
 
@@ -103,10 +98,21 @@ public class ComplainFormActivity extends AppCompatActivity {
 
         //button for attaching image.
         Button attachImage = findViewById(R.id.form_button_pickImage);
+
         attachImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showImagePickingDialog();
+                prepare();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                    if (ContextCompat.checkSelfPermission(ComplainFormActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+                        Toast.makeText(ComplainFormActivity.this, "Permission Denied", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(ComplainFormActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+
+                    } else bringImagePicker();
+
+                } else bringImagePicker();
             }
         });
 
@@ -150,43 +156,22 @@ public class ComplainFormActivity extends AppCompatActivity {
             }
         });
 
-
     }
 
+    //HANDLE IMAGE
     private void prepare() {
         mComplaintId = complaintReference.push().getKey();
         mHappyCode = createHappyCode();
         complaintReference = complaintReference.child(mSite).child(mType);
     }
 
-    private void showImagePickingDialog() {
-        prepare();
-        enableRuntimePermission();
-        AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
-        builder.setTitle("Alert");
-        builder.setMessage("Choose a method")
-                .setCancelable(false)
-                .setPositiveButton("Import Image", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        //pick image from gallery.
-
-                        Intent intent = new Intent();
-                        intent.setType("image/*");
-                        intent.setAction(Intent.ACTION_GET_CONTENT);
-                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
-                    }
-                })
-                .setNegativeButton("Take Image", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        //take image from the camera.
-                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(intent, CAMERA_IMAGE);
-                    }
-                });
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+    private void bringImagePicker() {
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setAspectRatio(1, 1)
+                .setMinCropResultSize(500, 500)
+                .setMaxCropResultSize(800, 800)
+                .start(this);
     }
 
     private void uploadImage(Uri uri) {
@@ -243,18 +228,9 @@ public class ComplainFormActivity extends AppCompatActivity {
         });
     }
 
-    private void cropImage() {
-        CropImage.activity()
-                .setGuidelines(CropImageView.Guidelines.ON)
-                .setRequestedSize(500, 500)
-                .setAspectRatio(1, 1)
-                .start(this);
-    }
+    // <----------------------------------------------------------------------------------------------------------->
 
-    // <-------------------------------------------------->
-
-    //Submit Complain Data.
-
+    //HANDLE DATA
     private void datePicker() {
         final Calendar c = Calendar.getInstance();
         int mYear = c.get(Calendar.YEAR);
@@ -547,12 +523,6 @@ public class ComplainFormActivity extends AppCompatActivity {
         showAlert("Error", "Couldn't process complain.\nTry again later");
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        getUserData();
-    }
-
     private void getUserData() {
         Log.i(TAG, "getUserData: called");
         //User database reference
@@ -587,11 +557,6 @@ public class ComplainFormActivity extends AppCompatActivity {
         return (String.valueOf(randomPIN));
     }
 
-    @Override
-    public void onBackPressed() {
-        finish();
-    }
-
     public void showAlert(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title).setMessage(message).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -605,87 +570,34 @@ public class ComplainFormActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {
-            Log.i(TAG, "onActivityResult: picked image");
-            Uri uri = data.getData();
-
-            uploadImage(uri);
-
-        } else if (requestCode == CAMERA_IMAGE && resultCode == Activity.RESULT_OK) {
-            Log.i(TAG, "onActivityResult: called");
-            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
-
-            imageView.setImageBitmap(bitmap);
-
-            uploadBitmapImage(bitmap);
-
-            //show image here.
-        } else {
-            Log.i(TAG, "onActivityResult: camera shit happened");
-        }
-    }
-
-    private void uploadBitmapImage(Bitmap bitmap) {
-        dialog.show();
-
-        final StorageReference ref = FirebaseStorage.getInstance().getReference("Complaints/");
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
-        byte[] dat = baos.toByteArray();
-
-        UploadTask uploadTask = ref.child(mComplaintId).putBytes(dat);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                dialog.dismiss();
-                // Handle unsuccessful uploads
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                dialog.dismiss();
-
-                getDownloadUrl(ref);
-            }
-        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                Log.i(TAG, String.format("onProgress: %5.2f MB transferred",
-                        taskSnapshot.getBytesTransferred() / 1024.0 / 1024.0));
-            }
-        });
-    }
-
-    public void enableRuntimePermission() {
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(ComplainFormActivity.this,
-                Manifest.permission.CAMERA)) {
-
-            Toast.makeText(ComplainFormActivity.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
-
-        } else {
-
-            ActivityCompat.requestPermissions(ComplainFormActivity.this, new String[]{
-                    Manifest.permission.CAMERA}, RequestPermissionCode);
-
-        }
+    protected void onStart() {
+        super.onStart();
+        getUserData();
     }
 
     @Override
-    public void onRequestPermissionsResult(int RC, String per[], int[] PResult) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-        switch (RC) {
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
 
-            case RequestPermissionCode:
+                Uri mainImageURI = result.getUri();
+                uploadImage(mainImageURI);
 
-                if (!(PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(ComplainFormActivity.this, "Permission Canceled, You cannot access CAMERA.", Toast.LENGTH_LONG).show();
-                }
-                break;
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+
+                Exception error = result.getError();
+                Log.i("Main", "onActivityResult: error: " + error);
+
+            }
         }
+
     }
 
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
 }//EOC
