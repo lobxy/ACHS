@@ -179,7 +179,7 @@ public class AddSupervisorActivity extends AppCompatActivity {
     private void submitData(final String uid) {
         dialog.show();
 
-        final Supervisor supervisor = new Supervisor(name, email, contact, site, uid, password, 0);
+        final Supervisor supervisor = new Supervisor(name, email, contact, site, uid, password, 0, true);
         reference.child("User_Data/Supervisors").child(site).child(uid).setValue(supervisor).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -187,6 +187,7 @@ public class AddSupervisorActivity extends AppCompatActivity {
                     HashMap<String, String> map = new HashMap<>();
                     map.put("email", email);
                     map.put("type", "Supervisor");
+                    map.put("site", site);
                     reference.child("Users").child(uid).setValue(map).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {

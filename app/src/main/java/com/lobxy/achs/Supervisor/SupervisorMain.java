@@ -3,18 +3,23 @@ package com.lobxy.achs.Supervisor;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,15 +41,22 @@ public class SupervisorMain extends AppCompatActivity {
     //Supervisor ke request assigned me se request id nikalni he,then usse confirmed wale me search krna he,
     // and after that uski value using bundle send krni he dusri activity me.
 
-    DatabaseReference databaseReference;
-    List<Complain> vComplaintList;
-    ListView complaint_listView;
-    FirebaseAuth mAuth;
-    TextView noComplaint;
-    ProgressDialog dialog;
-    String uId;
+    private List<Complain> mComplaintList;
+    private ListView listView_complaints;
 
-    ShowAlertDialog alertDialog;
+    private FirebaseAuth mAuth;
+    private DatabaseReference reference;
+
+    private TextView text_noComplaint;
+    private ProgressDialog progressDialog;
+
+    private String mUid, mSite;
+
+    private ShowAlertDialog alertDialog;
+
+    private Button buttonAvailability;
+
+    private boolean availability = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,24 +65,31 @@ public class SupervisorMain extends AppCompatActivity {
 
         alertDialog = new ShowAlertDialog(this);
 
-        dialog = new ProgressDialog(this);
-        dialog.setMessage("Working");
-        dialog.setInverseBackgroundForced(false);
-        dialog.setCancelable(false);
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Working");
+        progressDialog.setInverseBackgroundForced(false);
+        progressDialog.setCancelable(false);
 
-        //setting logged in supervisor's name on Action bar.
-        complaint_listView = findViewById(R.id.visor_listView);
-        noComplaint = findViewById(R.id.noComplaintsSupervisorMain);
+        listView_complaints = findViewById(R.id.visor_listView);
+        text_noComplaint = findViewById(R.id.noComplaintsSupervisorMain);
 
-        vComplaintList = new ArrayList<>();
-        databaseReference = FirebaseDatabase.getInstance().getReference("Supervisors_Complaint_Slot");
+        buttonAvailability = findViewById(R.id.visor_changeAvailability);
+        buttonAvailability.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeAvailabilityStatus();
+            }
+        });
+
+        mComplaintList = new ArrayList<>();
+        reference = FirebaseDatabase.getInstance().getReference("Supervisors_Complaint_Slot");
         mAuth = FirebaseAuth.getInstance();
-        uId = mAuth.getCurrentUser().getUid();
+        mUid = mAuth.getCurrentUser().getUid();
 
-        complaint_listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView_complaints.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Complain complaints = vComplaintList.get(i);
+                Complain complaints = mComplaintList.get(i);
 
                 Intent intent = new Intent(SupervisorMain.this, SupervisorDetail.class);
                 Bundle bundle = new Bundle();
@@ -101,36 +120,121 @@ public class SupervisorMain extends AppCompatActivity {
         Connection connection = new Connection(this);
 
         if (connection.check()) {
-            setData();
+            getData();
+            getSite();
         } else {
             Toast.makeText(this, "Please connect to internet", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void setData() {
-        dialog.show();
-        databaseReference.child(uId).addValueEventListener(new ValueEventListener() {
+    private void getData() {
+        progressDialog.show();
+        reference.child(mUid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                dialog.dismiss();
-                vComplaintList.clear();
+                progressDialog.dismiss();
+                mComplaintList.clear();
 
                 for (DataSnapshot reqSnap : dataSnapshot.getChildren()) {
                     Complain complaints = reqSnap.getValue(Complain.class);
-                    vComplaintList.add(complaints);
+                    mComplaintList.add(complaints);
                 }
-                ComplaintAdapter adapter = new ComplaintAdapter(SupervisorMain.this, vComplaintList);
-                complaint_listView.setAdapter(adapter);
+                ComplaintAdapter adapter = new ComplaintAdapter(SupervisorMain.this, mComplaintList);
+                listView_complaints.setAdapter(adapter);
 
                 if (adapter.isEmpty()) {
-                    noComplaint.setVisibility(View.VISIBLE);
+                    text_noComplaint.setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                dialog.dismiss();
+                progressDialog.dismiss();
                 alertDialog.showAlertDialog("Error", databaseError.getMessage());
+            }
+        });
+    }
+
+    //-----------------------------------------------------------------------------------
+
+    private void getSite() {
+        progressDialog.show();
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users");
+        reference.child(mUid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                progressDialog.dismiss();
+                mSite = dataSnapshot.child("site").getValue(String.class);
+                getAvailabilityStatus();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                progressDialog.dismiss();
+
+                Toast.makeText(SupervisorMain.this, "Error occured", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "onCancelled: error: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    private void getAvailabilityStatus() {
+        progressDialog.show();
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors")
+                .child(mSite).child(mUid);
+
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                progressDialog.dismiss();
+
+                boolean avail = dataSnapshot.child("availability").getValue(Boolean.class);
+
+                availability = avail;
+                if (availability) {
+                    buttonAvailability.setText("Available");
+                    buttonAvailability.setBackgroundColor(Color.GREEN);
+                } else {
+                    buttonAvailability.setText("Not Available");
+                    buttonAvailability.setBackgroundColor(Color.RED);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                progressDialog.dismiss();
+
+                Log.i(TAG, "onCancelled: getAvailability: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    private void changeAvailabilityStatus() {
+        progressDialog.show();
+
+        availability = !availability;
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors")
+                .child(mSite).child(mUid);
+
+        reference.child("availability").setValue(availability).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                progressDialog.dismiss();
+                if (task.isSuccessful()) {
+                    Toast.makeText(SupervisorMain.this, "Updated", Toast.LENGTH_SHORT).show();
+                    if (availability) {
+                        buttonAvailability.setText("Available");
+                        buttonAvailability.setBackgroundColor(Color.GREEN);
+                    } else {
+                        buttonAvailability.setText("Not Available");
+                        buttonAvailability.setBackgroundColor(Color.RED);
+                    }
+                } else {
+                    Toast.makeText(SupervisorMain.this, "Error", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

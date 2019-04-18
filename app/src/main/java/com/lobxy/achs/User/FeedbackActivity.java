@@ -22,6 +22,8 @@ import com.lobxy.achs.Model.Feedback;
 import com.lobxy.achs.R;
 import com.lobxy.achs.Utils.Connection;
 
+import java.util.HashMap;
+
 public class FeedbackActivity extends AppCompatActivity {
 
     private static final String TAG = "Feedback";
@@ -50,7 +52,7 @@ public class FeedbackActivity extends AppCompatActivity {
         dialog.setMessage("Working...");
 
         mAuth = FirebaseAuth.getInstance();
-        mFeedbackReference = FirebaseDatabase.getInstance().getReference("Feedback");
+
         mUserId = mAuth.getCurrentUser().getUid();
 
         text_happyCode = findViewById(R.id.feedback_happyCode);
@@ -105,7 +107,7 @@ public class FeedbackActivity extends AppCompatActivity {
             Toast.makeText(this, "Rating not given", Toast.LENGTH_SHORT).show();
         } else {
             Connection connection = new Connection(this);
-            if (connection.check()) saveFeedback();
+            if (connection.check()) giveRating();
             else Toast.makeText(this, "Not connected to internet", Toast.LENGTH_SHORT).show();
         }
     }
@@ -114,8 +116,36 @@ public class FeedbackActivity extends AppCompatActivity {
         //get supervisor id,complaint id.
         dialog.show();
         Feedback feedback = new Feedback(mUserId, mComplaintId, mFeedback, mRating, mSupervisorId, mSupervisorName);
-
+        DatabaseReference mFeedbackReference = FirebaseDatabase.getInstance().getReference("Feedback");
         mFeedbackReference.child(mSupervisorId).child(mComplaintId).setValue(feedback).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                dialog.dismiss();
+                if (task.isSuccessful()) {
+                    Toast.makeText(FeedbackActivity.this, "Feedback submitted", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(FeedbackActivity.this, "Error occurred", Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, "onComplete: error: " + task.getException().getMessage());
+                }
+            }
+        });
+
+
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+
+    //New shit.
+    //Test this shit.
+
+    private void giveRating() {
+
+        HashMap<String, Long> map = new HashMap<>();
+        map.put(mComplaintId, mRating);
+
+        DatabaseReference mFeedbackReference = FirebaseDatabase.getInstance().getReference("Ratings").child(mSupervisorId);
+        mFeedbackReference.setValue(map).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 dialog.dismiss();

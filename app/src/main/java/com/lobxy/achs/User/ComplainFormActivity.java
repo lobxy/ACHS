@@ -228,8 +228,6 @@ public class ComplainFormActivity extends AppCompatActivity {
         });
     }
 
-    // <----------------------------------------------------------------------------------------------------------->
-
     //HANDLE DATA
     private void datePicker() {
         final Calendar c = Calendar.getInstance();
@@ -600,4 +598,5 @@ public class ComplainFormActivity extends AppCompatActivity {
     public void onBackPressed() {
         finish();
     }
+
 }//EOC

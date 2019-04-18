@@ -6,8 +6,9 @@ public class Supervisor {
 
     private String name, email, contact, site, uid, password;
     long count;
+    boolean availability;
 
-    public Supervisor(String name, String email, String contact, String site, String uid, String password, long count) {
+    public Supervisor(String name, String email, String contact, String site, String uid, String password, long count, boolean availability) {
         this.name = name;
         this.email = email;
         this.contact = contact;
@@ -15,6 +16,15 @@ public class Supervisor {
         this.uid = uid;
         this.password = password;
         this.count = count;
+        this.availability = availability;
+    }
+
+    public boolean isAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(boolean availability) {
+        this.availability = availability;
     }
 
     public long getCount() {

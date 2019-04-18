@@ -6,6 +6,12 @@
     android:orientation="vertical"
     tools:context=".Supervisor.SupervisorMain">
 
+    <Button
+        android:id="@+id/visor_changeAvailability"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="" />
+
     <TextView
         android:id="@+id/noComplaintsSupervisorMain"
         android:layout_width="match_parent"
