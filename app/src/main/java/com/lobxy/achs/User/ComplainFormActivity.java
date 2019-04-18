@@ -122,6 +122,7 @@ public class ComplainFormActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Process complaint
+                prepare();
                 validation();
             }
         });
@@ -368,10 +369,15 @@ public class ComplainFormActivity extends AppCompatActivity {
 
         dialog.show();
 
-
         //create a new object of model class, feed the data to it.
         final Complain complain = new Complain(mDownloadUrl, mUid, mComplaintId, mName, mEmail, mAddress, mContact, mSite, mType, mDescription, mVisitTime, mComplaintInitTime,
                 mHappyCode, "Unresolved", mSupervisorName, "No Data");
+
+        //TODO: complaintId causes the app to crash as its null.
+        //java.lang.NullPointerException: Can't pass null for argument 'pathString' in child()
+        //        at com.google.firebase.database.DatabaseReference.child(com.google.firebase:firebase-database@@16.1.0:101)
+        //        at com.lobxy.achs.User.ComplainFormActivity.uploadComplaintData(ComplainFormActivity.java:377)
+        //        at com.lobxy.achs.User.ComplainFormActivity$13.onDataChange(ComplainFormActivity.java:346)
 
         //Upload data to the firebase
         complaintReference.child(mComplaintId).setValue(complain).addOnSuccessListener(new OnSuccessListener<Void>() {

@@ -16,22 +16,24 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.lobxy.achs.Model.Feedback;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.lobxy.achs.Model.Rating;
 import com.lobxy.achs.R;
 import com.lobxy.achs.Utils.Connection;
-
-import java.util.HashMap;
 
 public class FeedbackActivity extends AppCompatActivity {
 
     private static final String TAG = "Feedback";
-    private String mComplaintId, mUserId, mFeedback, mSupervisorId, mSupervisorName, mHappyCode;
+    private String mComplaintId, mUserId, mFeedback, mSupervisorId, mSupervisorName, mHappyCode, mSite;
     private long mRating;
 
     private FirebaseAuth mAuth;
-    private DatabaseReference mFeedbackReference;
+    private DatabaseReference mRatingReference;
 
     private EditText edit_feedback;
 
@@ -54,6 +56,7 @@ public class FeedbackActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
 
         mUserId = mAuth.getCurrentUser().getUid();
+        mRatingReference = FirebaseDatabase.getInstance().getReference("Ratings").child(mUserId);
 
         text_happyCode = findViewById(R.id.feedback_happyCode);
 
@@ -75,6 +78,7 @@ public class FeedbackActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         getData();
+        getSite();
     }
 
     private void getData() {
@@ -90,6 +94,24 @@ public class FeedbackActivity extends AppCompatActivity {
             Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
             Log.i("Feedback", "getData: no data in intent found");
         }
+    }
+
+    private void getSite() {
+        dialog.show();
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users");
+        reference.child(mSupervisorId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                dialog.dismiss();
+                mSite = dataSnapshot.child("site").getValue(String.class);
+                Log.i(TAG, "onDataChange: site: " + mSite);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.i(TAG, "onCancelled: error: " + databaseError.getMessage());
+            }
+        });
     }
 
     private void validation() {
@@ -112,53 +134,85 @@ public class FeedbackActivity extends AppCompatActivity {
         }
     }
 
-    private void saveFeedback() {
-        //get supervisor id,complaint id.
+    //------------------------------------------------------------------------------------------------------------
+
+    private void giveRating() {
         dialog.show();
-        Feedback feedback = new Feedback(mUserId, mComplaintId, mFeedback, mRating, mSupervisorId, mSupervisorName);
-        DatabaseReference mFeedbackReference = FirebaseDatabase.getInstance().getReference("Feedback");
-        mFeedbackReference.child(mSupervisorId).child(mComplaintId).setValue(feedback).addOnCompleteListener(new OnCompleteListener<Void>() {
+        Rating rating = new Rating(mFeedback, mRating);
+
+        mRatingReference.child(mComplaintId).setValue(rating).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 dialog.dismiss();
                 if (task.isSuccessful()) {
                     Toast.makeText(FeedbackActivity.this, "Feedback submitted", Toast.LENGTH_SHORT).show();
-                    finish();
+                    reEvaluateRating();
                 } else {
                     Toast.makeText(FeedbackActivity.this, "Error occurred", Toast.LENGTH_SHORT).show();
                     Log.i(TAG, "onComplete: error: " + task.getException().getMessage());
                 }
             }
         });
-
 
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    private void reEvaluateRating() {
+        //get all ratings of the visor.
+        //add them and take avg by no. of ratings.
+        //update it into supervisor's avg rating.
 
-    //New shit.
-    //Test this shit.
+        //Get Ratings.
+        dialog.show();
 
-    private void giveRating() {
+        Query query = mRatingReference.orderByChild("rating");
 
-        HashMap<String, Long> map = new HashMap<>();
-        map.put(mComplaintId, mRating);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-        DatabaseReference mFeedbackReference = FirebaseDatabase.getInstance().getReference("Ratings").child(mSupervisorId);
-        mFeedbackReference.setValue(map).addOnCompleteListener(new OnCompleteListener<Void>() {
+                dialog.dismiss();
+
+                long noOfRatings = dataSnapshot.getChildrenCount();
+                Log.i(TAG, "onDataChange: noOfRatings:" + noOfRatings);
+
+                long value = 0;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Rating rating = snapshot.getValue(Rating.class);
+                    value += rating.getRating();
+                }
+
+                int newRating = (int) (value / noOfRatings);
+
+                setSupervisorRating(newRating);
+
+                Log.i(TAG, "onDataChange: avg :" + value);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                dialog.dismiss();
+                Log.i(TAG, "evaluateRating error :" + databaseError.getMessage());
+            }
+        });
+
+    }
+
+    private void setSupervisorRating(int newRating) {
+        dialog.show();
+        DatabaseReference mFeedbackReference = FirebaseDatabase.getInstance().getReference("User_Data/Supervisors");
+        mFeedbackReference.child(mSite).child(mSupervisorId).child("rating").setValue(newRating).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 dialog.dismiss();
                 if (task.isSuccessful()) {
-                    Toast.makeText(FeedbackActivity.this, "Feedback submitted", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(FeedbackActivity.this, "Rating changed", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(FeedbackActivity.this, "Error occurred", Toast.LENGTH_SHORT).show();
                     Log.i(TAG, "onComplete: error: " + task.getException().getMessage());
                 }
             }
         });
-
     }
 
     //EOC
